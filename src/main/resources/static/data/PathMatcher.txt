@@ -1,0 +1,5 @@
+Each file system implementation provides a PathMatcher interface implementation:
+
+
+public interface PathMatcher 
+        
