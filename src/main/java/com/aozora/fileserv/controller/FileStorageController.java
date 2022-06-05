@@ -23,6 +23,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.aozora.fileserv.service.FileStorageServI;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author SabinaM
@@ -34,34 +38,47 @@ public class FileStorageController {
 	private Set<Resource> filesInDirectory = new HashSet<>();
 	private Set<String> mFiles = new HashSet<>();
 	
-	@Autowired
+	
 	private FileStorageServI fileStorageService;
 
 
 	/**
 	 * 
 	 */
-	public FileStorageController() {
-		// TODO Auto-generated constructor stub
+	public FileStorageController(FileStorageServI storageService) {
+		fileStorageService=storageService;
 	}
 
 	
 	//POST http://localhost:8082/matchedfiles?syntax="regex"
 	//pattern as plain text in request body
-	@PostMapping(value = "/matchedfiles", consumes = MediaType.ALL_VALUE,produces = {MediaType.APPLICATION_JSON_VALUE})
-	ResponseEntity<Set<Resource>> getAllFilesThatMatchRegex(@RequestBody String pattern,
+	@PostMapping(value = "/matchedfiles", consumes = MediaType.APPLICATION_JSON_VALUE,produces = {MediaType.APPLICATION_JSON_VALUE})
+	ResponseEntity<Set<String>> getAllFilesThatMatchRegex(@RequestBody String jsonPatternAndDirectory,
 	@RequestParam(required = false, defaultValue="regex") String syntax){
-		 
-		if (syntax.equalsIgnoreCase("glob") || syntax.equalsIgnoreCase("regex")) {			
-			filesInDirectory = fileStorageService.getAllThatMatchRegex(pattern, syntax, null);
-			if( filesInDirectory == null || filesInDirectory.size() == 0) {			
-				return new ResponseEntity<Set<Resource>>(filesInDirectory, HttpStatus.NOT_FOUND);			
-			}else {
-			   return new ResponseEntity<Set<Resource>>(filesInDirectory, HttpStatus.OK);
-			}
-		}else {
-			  return new ResponseEntity<Set<Resource>>(filesInDirectory, HttpStatus.BAD_REQUEST);
+		ObjectMapper objectMapper = new ObjectMapper();		
+		JsonNode jsonNode = null;
+		try {
+			jsonNode = objectMapper.readTree(jsonPatternAndDirectory);
+			String directory= jsonNode.get("directory").asText();
+			 String pattern = jsonNode.get("pattern").asText();
+			 if (!(syntax.equalsIgnoreCase("glob") || syntax.equalsIgnoreCase("regex"))) {			
+				  return new ResponseEntity<Set<String>>(mFiles, HttpStatus.BAD_REQUEST);
 			 }
+			 filesInDirectory = fileStorageService.getAllThatMatchRegex(pattern, syntax, directory);
+			 filesInDirectory.forEach( e -> mFiles.add(e.getFilename()));
+			 if( mFiles == null || mFiles.size() == 0) {			
+				return new ResponseEntity<Set<String>>(mFiles, HttpStatus.NOT_FOUND);			
+			}else {
+				   return new ResponseEntity<Set<String>>(mFiles, HttpStatus.OK);
+			}
+		} catch (JsonMappingException e1) {		
+			e1.printStackTrace();
+			
+		} catch (JsonProcessingException e1) {			
+			e1.printStackTrace();
+		}
+		 return new ResponseEntity<Set<String>>(mFiles, HttpStatus.OK);		 
+		
 	}
 	
 	@GetMapping("/files/{filename:.+}")

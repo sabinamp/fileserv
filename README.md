@@ -14,3 +14,20 @@
 
 * getting list of Files’ information (file names)
 
+### REST API
+POST http://localhost:8082/fileservice/files/matchedfiles?syntax=regex
+ -the pattern and directory in request body as JSON: 
+ {
+	"pattern": "^[a-zA-Z0-9._ -]+\\.(doc|pdf|csv|txt)$",
+	"directory": "C:/workspace_sts4-14/fileservice/bin/main/static/data"
+}
+Content-Type: text/plain
+Accept: application/json
+Response: 
+[
+    "StoreAddressList.pdf",
+    "words.txt",
+    "8-Reasons-AStartupOverACorporateJob.pdf",
+    "PathMatcher.txt",
+    "50-contacts.csv"
+]
