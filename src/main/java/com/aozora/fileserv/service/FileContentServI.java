@@ -14,7 +14,7 @@ import java.util.TreeMap;
 public interface FileContentServI {
 	static final String DELIMITER = "\\s*,\\s*|,\\s+|\\s+|\\.\\s*|\\?\\s*|\\!\\s*";
 	
-	TreeMap<Integer, Set<String>> getFirstNFreqWords(String filename, int n);
+	TreeMap<Integer, Set<String>> getFirstNFreqWords(String filename, String directoryPath, int n);
 	
-	Map<Integer, Set<String>> getLongestWords(String filename);
+	Map<Integer, Set<String>> getLongestWords(String filename, String directoryPath);
 }

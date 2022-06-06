@@ -16,4 +16,6 @@ public interface FileStorageServI {
 		public void deleteAllUploads();
 		
 		Set<Resource> getAllThatMatchRegex(String pattern,String patternSyntax, String directory);
+
+		public String getUploadDir();
 }

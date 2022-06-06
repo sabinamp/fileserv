@@ -1,0 +1,95 @@
+In Spring Boot, application.properties is the default file from which configuration values are picked up. Spring Boot can pick the application.properties file from anywhere on the classpath. Typically, application.properties is located at src\main\resources.
+ examples of customizing Spring Security using configuration in application.properties:
+     security.basic.enabled=false
+    management.security.enabled=false
+    security.user.name=user-name
+    security.user.password=user-password
+    security.oauth2.client.clientId: clientId
+    security.oauth2.client.clientSecret: clientSecret
+    security.oauth2.client.authorized-grant-types:                
+    authorization_code,refresh_token,password
+    security.oauth2.client.scope: openid
+
+
+    #Logging
+    # Location of the logging configuration file.
+  logging.config=
+# Log file name.
+  logging.file=
+# Configure Logging level. 
+# Example `logging.level.org.springframework=TRACE`
+  logging.level.*=
+
+  # embedded server features that can be configured through application properties:
+  # Path of the error controller.
+server.error.path=/error 
+# Server HTTP port
+server.port=8080
+# Enable SSL support.
+server.ssl.enabled=
+# Path to key store with SSL certificate
+server.ssl.key-store=
+# Key Store Password
+server.ssl.key-store-password=
+# Key Store Provider
+server.ssl.key-store-provider=
+# Key Store Type
+server.ssl.key-store-type=
+# Should we enable access log of Tomcat?
+server.tomcat.accesslog.enabled=false
+# Maximum number of connections that server can accept
+server.tomcat.max-connections=
+
+#Spring mVC
+# Date format to use. For instance `dd/MM/yyyy`.
+ spring.mvc.date-format=
+# Locale to use.
+ spring.mvc.locale=
+# Define how the locale should be resolved.
+ spring.mvc.locale-resolver=accept-header
+# Should "NoHandlerFoundException" be thrown if no Handler is found?
+ spring.mvc.throw-exception-if-no-handler-found=false
+# Spring MVC view prefix. Used by view resolver.
+ spring.mvc.view.prefix=
+# Spring MVC view suffix. Used by view resolver.
+ spring.mvc.view.suffix=
+
+ #Spring Starter Security
+ # Set true to Enable basic authentication
+ security.basic.enabled=true
+# Provide a Comma-separated list of uris you would want to secure
+ security.basic.path=/**
+# Provide a Comma-separated list of paths you don't want to secure
+ security.ignored=
+# Name of the default user configured by spring security
+ security.user.name=user
+# Password of the default user configured by spring security. 
+ security.user.password=
+# Roles granted to default user
+ security.user.role=USER
+
+ #Data Sources, JDBC, and JPA 
+ ## Fully qualified name of the JDBC driver. 
+ spring.datasource.driver-class-name=
+# Populate the database using 'data.sql'.
+ spring.datasource.initialize=true
+# JNDI location of the datasource.
+ spring.datasource.jndi-name=
+# Name of the datasource.
+ spring.datasource.name=testdb
+# Login password of the database.
+ spring.datasource.password=
+# Schema (DDL) script resource references.
+ spring.datasource.schema=
+# Db User to use to execute DDL scripts
+ spring.datasource.schema-username=
+# Db password to execute DDL scripts
+ spring.datasource.schema-password=
+# JDBC url of the database.
+ spring.datasource.url=
+# JPA - Initialize the schema on startup.
+ spring.jpa.generate-ddl=false
+# Use Hibernate's newer IdentifierGenerator for AUTO, TABLE and SEQUENCE.
+ spring.jpa.hibernate.use-new-id-generator-mappings=
+# Enable logging of SQL statements.
+ spring.jpa.show-sql=false

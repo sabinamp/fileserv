@@ -39,11 +39,11 @@ public class FreqWords {
 	        return countMap;
 	 }
 	 
-	 static Map<String, Integer> getFrequencies(String fileName) throws IOException, URISyntaxException{
+	 static Map<String, Integer> getFrequencies(String fileName, String directoryPath) throws IOException, URISyntaxException{
 	        Map<String, Integer> result = new HashMap<>();
 	        Pattern pattern = Pattern.compile(FileContentServI.DELIMITER);
-	        try {
-	            List<String> lines = FileUtils.getLinesInFile(fileName);
+	        
+	            List<String> lines = FileUtils.getLinesInFile(fileName,directoryPath);
 	           for(String line: lines){
 	               System.out.println("counting frequencies for the line: "+line);
 	               System.out.println("number of words in the line: "+Arrays.asList(line.split(FileContentServI.DELIMITER)).size());
@@ -60,17 +60,14 @@ public class FreqWords {
 	               }
 	           }	           
 	            return result;
-	        } catch (IOException e) {
-	            e.printStackTrace();
-	            throw new IOException();
-	        }
+	        
 	 }
 	 
-	 static Map<Integer,Set<String>> getWordSetByFrequency(String filename) throws IOException, URISyntaxException{
+	 static Map<Integer,Set<String>> getWordSetByFrequency(String filename, String directoryPath) throws IOException, URISyntaxException{
 		 //ClassPathResource fileResource = new ClassPathResource(filename);
 	        TreeMap<Integer, Set<String>> wordFreqResult = new TreeMap<Integer, Set<String>>();
 	        if(freqResult == null) {
-	        	freqResult = getFrequencies(filename);
+	        	freqResult = getFrequencies(filename, directoryPath);
 	        }
 	        	        
 	        for( String each: freqResult.keySet()) {
@@ -91,9 +88,9 @@ public class FreqWords {
 	   * In case there are more than 2 words with the same length on a line, filter on
 	   * the most frequent 2 words from the whole document, these shall be returned.
 	   */
-	  static Map<Integer, Set<String>> getLongestWords(String fileName) throws IOException, URISyntaxException{
+	  static Map<Integer, Set<String>> getLongestWords(String fileName, String directoryPath) throws IOException, URISyntaxException{
 		  if(freqResult == null) {
-	        	freqResult = getFrequencies(fileName);
+	        	freqResult = getFrequencies(fileName, directoryPath);
 	        }
 	        //line number and the 2 longest words or frequent words
 	        Map<Integer, Set<String>> resultLines = new HashMap<>();
@@ -101,7 +98,7 @@ public class FreqWords {
 	        Set<String> longest2WordsSetPerLine= null;
 	        Pattern pattern = Pattern.compile(FileContentServI.DELIMITER);
 	        try {
-	            List<String> lines = FileUtils.getLinesInFile(fileName);
+	            List<String> lines = FileUtils.getLinesInFile(fileName, directoryPath);
 	            int currentLineNb=0;
 	            for(String line: lines){
 	               
@@ -144,12 +141,22 @@ public class FreqWords {
 	     * returns the first n entries in a TreeMap of frequency and set of strings
 	     * @input n -number of frequency entries in the returned map
 	     */
-	  static TreeMap<Integer, Set<String>> getFirstNFreq(Map<Integer, Set<String>> freqMap, int n){
-	        TreeMap<Integer, Set<String>> result = new TreeMap<>();
+	  static TreeMap<Integer, Set<String>> getFirstNFreq(int n, String filename, String directoryPath){
+		  Map<Integer, Set<String>> freqMap = null;
+		  TreeMap<Integer, Set<String>> result = new TreeMap<>();
+		try {
+			freqMap = getWordSetByFrequency(filename, directoryPath);
+			
 	        for( int i= 0; i < n; i++){
 	            freqMap.entrySet()
 	                    .forEach( entry-> result.put(entry.getKey(), entry.getValue()));
 	        }
+		} catch (IOException e) {			
+			e.printStackTrace();
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
+	        
 	       //the frequencies in natural order
 	        return result;
 

@@ -16,24 +16,17 @@ public class FileContentService implements FileContentServI {
 	}
 
 	@Override
-	public TreeMap<Integer, Set<String>> getFirstNFreqWords(String filename, int n) {
-		 Map<Integer, Set<String>> res = null;
-		try {			 
-			res = FreqWords.getWordSetByFrequency(filename);
-		} catch (IOException e) {			
-			e.printStackTrace();
-		} catch (URISyntaxException e) {			
-			e.printStackTrace();
-		}
-		 TreeMap<Integer, Set<String>> result = FreqWords.getFirstNFreq(res, n);
+	public TreeMap<Integer, Set<String>> getFirstNFreqWords(String filename, String directoryPath, int n) {
+			
+		 TreeMap<Integer, Set<String>> result = FreqWords.getFirstNFreq(n, filename,directoryPath);
 		 return result;
 	}
 
 	@Override
-	public Map<Integer, Set<String>> getLongestWords(String filename) {
+	public Map<Integer, Set<String>> getLongestWords(String filename, String directoryPath) {
 		Map<Integer, Set<String>> result = null;
 		try {
-			result= FreqWords.getLongestWords(filename);
+			result= FreqWords.getLongestWords(filename, directoryPath);
 		} catch (IOException e) {		
 			e.printStackTrace();
 		} catch (URISyntaxException e) {			

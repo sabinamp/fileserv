@@ -9,6 +9,9 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -32,6 +35,10 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.aozora.fileserv.payload.UploadFileResponse;
 import com.aozora.fileserv.service.FileContentServI;
 import com.aozora.fileserv.service.FileStorageServI;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 /**
@@ -73,8 +80,8 @@ public class FileContentController {
 	  
 		ResponseEntity<String> response = null;
 		StringBuilder builder = new StringBuilder();
-		
-		words = fileContentService.getFirstNFreqWords(uploadResponse.getFileName(), n);
+		String directoryPath = fileStorageService.getUploadDir();
+		words = fileContentService.getFirstNFreqWords(uploadResponse.getFileName(),directoryPath, n);
 		words.entrySet().forEach( s -> builder.append(s.getValue()+" has the frequency: "+s.getKey() +" \n"));		
 
 		
@@ -86,22 +93,34 @@ public class FileContentController {
 		return response;
 	}
 	
-	@GetMapping( value = "/freqwords", consumes = MediaType.TEXT_PLAIN_VALUE, produces = {MediaType.TEXT_PLAIN_VALUE})
-	public ResponseEntity<String> getFirstNFreqWords(@RequestParam(required=true) int n,
-			@RequestParam("filename") String file) {		
-		Resource resource = fileStorageService.getResourceInData(file);
+	@PostMapping( value = "/freqwords", consumes={MediaType.ALL_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
+	public ResponseEntity<List<String>> getFirstNFreqWords(@RequestParam(required=true) int n,
+			@RequestBody String jsonFileName) {	
+		ObjectMapper objectMapper = new ObjectMapper();		
+		JsonNode jsonFileNode = null;
 
-		ResponseEntity<String> response = null;
-		StringBuilder builder = new StringBuilder();
-		
-		words = fileContentService.getFirstNFreqWords(resource.getFilename(), n);
-		words.entrySet().forEach( s -> builder.append(s.getValue()+" has the frequency: "+s.getKey() +" \n"));		
+		ResponseEntity<List<String>> response = null;
+		try {
+			jsonFileNode = objectMapper.readTree(jsonFileName);
+			String fileName = jsonFileNode.get("fileName").asText();
+			
+			String directoryPath = fileStorageService.getUploadDir();
+			List<String> frequenciesW = new ArrayList<>();
+			words = fileContentService.getFirstNFreqWords(fileName,directoryPath, n);
+			words.entrySet().forEach( 
+					w -> frequenciesW.add( ""+w.getValue()+" has the frequency "+w.getKey())
+							);		
 
-		
-		String output = builder.toString();
-		if(output != null && !output.isEmpty()) {
-			response = new ResponseEntity<String>(output, HttpStatus.OK);
+			if(frequenciesW != null && !frequenciesW.isEmpty()) {
+				response = new ResponseEntity<List<String>>(frequenciesW, HttpStatus.OK);
+			}
+		} catch (JsonMappingException e) {			
+			e.printStackTrace();
+		} catch (JsonProcessingException e) {
+			 logger.debug(" JsonProcessingException caught"+e.getMessage());
+			e.printStackTrace();
 		}
+		
 	 				
 		return response;
 	}

@@ -19,18 +19,19 @@
  -the pattern and directory in request body as JSON: 
 	 {
 		"pattern": "^[a-zA-Z0-9._ -]+\\.(doc|pdf|csv|txt)$",
-		"directory": "C:/workspace_sts4-14/fileservice/bin/main/static/data"
+		"directory": "C:/workspace_sts4-14/fileserv/bin/main/static/data"
 	}
 	
-** POST http://localhost:8082/fileservice/files/matchedfiles?syntax=regex
+	
+* POST http://localhost:8082/fileservice/files/matchedfiles?syntax=regex
 	 -the pattern and directory in request body as JSON: 
 	 {
 		"pattern": "^[a-zA-Z0-9._ -]+\\.(doc|pdf|csv|txt)$",
-		"directory": "C:/workspace_sts4-14/fileservice/bin/main/static/data"
-	}
+		"directory": "C:/workspace_sts4-14/fileserv/bin/main/static/uploads"
+	 }
 	Content-Type: text/plain
 	Accept: application/json
-	Response: 
+	- Response body: 
 	[
 	    "StoreAddressList.pdf",
 	    "words.txt",
@@ -39,3 +40,9 @@
 	    "50-contacts.csv"
 	]
 	
+	
+* POST http://localhost:8082/fileservice/content/freqwords?n=10
+
+- Request body json: { "fileName": "words.txt" }
+- ResponseBody ["[branch] has the frequency 1","[coding, I] has the frequency 2","[house] has the frequency 7","[Christmas, gardening, garden] has the frequency 9","[home] has the frequency 14","[love] has the frequency 15"]
+

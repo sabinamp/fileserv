@@ -47,6 +47,11 @@ public class FileStorageService implements FileStorageServI {
 	}
 
 	
+	public String getUploadDir() {
+		return serviceProperties.getUploadDir();
+	}
+
+
 	@Override
 	public String save(MultipartFile file) {
 		Path fileStorageLocation =Paths.get(this.serviceProperties.getUploadDir());
