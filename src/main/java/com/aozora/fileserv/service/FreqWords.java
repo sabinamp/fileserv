@@ -68,7 +68,7 @@ public class FreqWords {
 	 
 	 static Map<Integer,Set<String>> getWordSetByFrequency(String filename) throws IOException, URISyntaxException{
 		 //ClassPathResource fileResource = new ClassPathResource(filename);
-	        TreeMap<Integer, Set<String>> wordFreqResult = new TreeMap<>();
+	        TreeMap<Integer, Set<String>> wordFreqResult = new TreeMap<Integer, Set<String>>();
 	        if(freqResult == null) {
 	        	freqResult = getFrequencies(filename);
 	        }

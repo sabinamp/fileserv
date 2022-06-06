@@ -3,7 +3,11 @@
  */
 package com.aozora.fileserv.exception;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.nio.file.InvalidPathException;
+import java.nio.file.NoSuchFileException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.PatternSyntaxException;
@@ -80,4 +84,74 @@ public class FileServiceExceptionHandler {
 	    return errors;
 	}
 	
+	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+	@ExceptionHandler(IOException.class)
+	public Map<String, String> handleIOExceptions(IOException ex) {
+	    Map<String, String> errors = new HashMap<>();
+	    String errorMessage = ex.getMessage();
+        errors.put("message", errorMessage);
+        String localizedMessage = ex.getLocalizedMessage();
+        errors.put("localizedMessage", localizedMessage);
+       
+	    return errors;
+	}
+	
+	@ResponseStatus(HttpStatus.NOT_FOUND)
+	@ExceptionHandler(NoSuchFileException.class)
+	public Map<String, String> handleFileRelatedExceptions(NoSuchFileException ex) {
+	    Map<String, String> errors = new HashMap<>();
+	    String errorMessage = ex.getMessage();
+        errors.put("message", errorMessage);
+        String reasonMessage = ex.getReason();
+        errors.put("reasonMessage", reasonMessage);
+       
+	    return errors;
+	}
+	
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ExceptionHandler(URISyntaxException.class)
+	public Map<String, String> handleValidationExceptions(URISyntaxException ex) {
+		 Map<String, String> errors = new HashMap<>();
+		    String errorMessage = "input: "+ex.getInput()+ ex.getMessage();
+	        errors.put("message", errorMessage);
+	        String reasonMessage = ex.getReason();
+	        errors.put("reasonMessage", reasonMessage);
+	    return errors;
+	}
+	
+	
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ExceptionHandler(PatternSyntaxException.class)
+	public Map<String, String> handlePatternValidationExceptions(PatternSyntaxException ex) {
+	    Map<String, String> errors = new HashMap<>();
+	    String errorMessage = ex.getMessage();
+        errors.put("message", errorMessage);
+        String errorDescription = ex.getDescription();
+        errors.put(errorDescription, errorDescription);
+	    return errors;
+	}
+	
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ExceptionHandler(InvalidPathException.class)
+	public Map<String, String> handleFilePathRelatedExceptions(InvalidPathException ex) {
+	    Map<String, String> errors = new HashMap<>();
+	    String errorMessage = ex.getMessage();
+        errors.put("message", errorMessage);
+        String reason = ex.getReason(); 
+        errors.put("reasonMessage", reason);
+	    return errors;
+	}
+	
+	
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ExceptionHandler(MalformedURLException.class)
+	public Map<String, String> handleFileRelatedExceptions(MalformedURLException ex) {
+	    Map<String, String> errors = new HashMap<>();
+	    String errorMessage = ex.getMessage();
+        errors.put("errorMessage", errorMessage);
+        String localizedMessage = ex.getLocalizedMessage();
+        errors.put("localizedMessage", localizedMessage);
+        errors.put("cause",  ex.getCause().getMessage());
+	    return errors;
+	}
 }

@@ -10,7 +10,9 @@ import com.aozora.fileserv.exception.FileStorageException;
 public interface FileStorageServI {
 	
 		public String save(MultipartFile file);
-		public Resource getResource(String filename) throws FileStorageException;
+		
+		public Resource getResourceInUploads(String filename) throws FileStorageException;
+		public Resource getResourceInData(String filename) throws FileStorageException;
 		public void deleteAllUploads();
 		
 		Set<Resource> getAllThatMatchRegex(String pattern,String patternSyntax, String directory);

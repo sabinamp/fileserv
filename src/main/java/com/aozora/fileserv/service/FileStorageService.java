@@ -46,6 +46,7 @@ public class FileStorageService implements FileStorageServI {
 		
 	}
 
+	
 	@Override
 	public String save(MultipartFile file) {
 		Path fileStorageLocation =Paths.get(this.serviceProperties.getUploadDir());
@@ -63,7 +64,7 @@ public class FileStorageService implements FileStorageServI {
 
 	
 	@Override
-	public Resource getResource(String filename) throws FileStorageException {
+	public Resource getResourceInUploads(String filename) throws FileStorageException {
 		Path fileStorageLocation =Paths.get(this.serviceProperties.getUploadDir());
 		 try {
 		      Path filePath = fileStorageLocation.resolve(filename).normalize();
@@ -77,6 +78,7 @@ public class FileStorageService implements FileStorageServI {
 		      throw new FileStorageException("Error: " + e.getMessage());
 		    }
 	}
+	
 
 	@Override
 	public void deleteAllUploads() {
@@ -127,5 +129,22 @@ public class FileStorageService implements FileStorageServI {
 		        }
 		       return fileList;
 		}
+
+	@Override
+	public Resource getResourceInData(String filename) throws FileStorageException {
+		Path fileStorageLoc =Paths.get(this.serviceProperties.getDIRECTORY_PATH());
+		 try {
+		      Path filePath = fileStorageLoc.resolve(filename).normalize();
+		      Resource resource = new UrlResource(filePath.toUri());
+		      if (resource.exists() || resource.isReadable()) {
+		        return resource;
+		      } else {
+		        throw new FileStorageException("Could not read the file!");
+		      }
+		    } catch (MalformedURLException e) {
+		      throw new FileStorageException("Error: " + e.getMessage());
+		    }
+	
+	}
 
 }

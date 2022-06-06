@@ -21,7 +21,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.aozora.fileserv.payload.UploadFileResponse;
 import com.aozora.fileserv.service.FileStorageServI;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -81,12 +84,31 @@ public class FileStorageController {
 		
 	}
 	
-	@GetMapping("/files/{filename:.+}")
-	@ResponseBody
-	public ResponseEntity<Resource> getFile(@PathVariable String filename) {
-	    Resource file = fileStorageService.getResource(filename);
+	@GetMapping("/{staticFolder}")
+	
+	public ResponseEntity<Resource> getFile(@RequestParam(required=true) String file, @PathVariable String staticFolder) {
+		Resource fileResource = null;
+		if(staticFolder=="data") {
+			 fileResource = fileStorageService.getResourceInData(file);
+		}else if( staticFolder=="uploads") {
+			fileResource = fileStorageService.getResourceInUploads(file);
+		}
+	   
 	    return ResponseEntity.ok()
-	        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
-	        .body(file);
+	        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file + "\"")
+	        .body(fileResource);
+	}
+	
+	@PostMapping("/upload")
+	public UploadFileResponse uploadFile(@RequestParam("file") MultipartFile file) {
+	        String fileName = fileStorageService.save(file);
+
+	        String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+	                .path("/uploads/")
+	                .path(fileName)
+	                .toUriString();
+
+	        return new UploadFileResponse(fileName, fileDownloadUri,
+	                file.getContentType(), file.getSize());
 	}
 }
