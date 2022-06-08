@@ -48,13 +48,13 @@ public class FileStorageService implements FileStorageServI {
 
 	
 	public String getUploadDir() {
-		return serviceProperties.getUploadDir();
+		return this.serviceProperties.getUploadDir();
 	}
 
 
 	@Override
 	public String save(MultipartFile file) {
-		Path fileStorageLocation =Paths.get(this.serviceProperties.getUploadDir());
+		Path fileStorageLocation =Paths.get(getUploadDir());
 		// Normalize file name
         String fileName = StringUtils.cleanPath(file.getOriginalFilename());
         Path targetLocation = fileStorageLocation.resolve(fileName);
@@ -70,7 +70,7 @@ public class FileStorageService implements FileStorageServI {
 	
 	@Override
 	public Resource getResourceInUploads(String filename) throws FileStorageException {
-		Path fileStorageLocation =Paths.get(this.serviceProperties.getUploadDir());
+		Path fileStorageLocation =Paths.get(getUploadDir());
 		 try {
 		      Path filePath = fileStorageLocation.resolve(filename).normalize();
 		      Resource resource = new UrlResource(filePath.toUri());

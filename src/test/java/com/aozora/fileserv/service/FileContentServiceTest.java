@@ -5,10 +5,12 @@ package com.aozora.fileserv.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.net.URISyntaxException;
+import java.nio.file.AccessDeniedException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -126,9 +128,13 @@ public class FileContentServiceTest {
 	 
 
 	@Test
-	void givenFileWhenGetLongestWords_ThenCorrect() {
+	void givenFileWhenGettingLongestWordsPerLine_ThenCorrect() {
 		Map<Integer, Set<String>> result =fileContentService.getLongestWords(fileName, directoryPath);
 		assertTrue(longestWordsPerLine.size()== result.size());
+		assertNotEquals(0, result.size(), "The result cannot be 0");
 		assertEquals(longestWordsPerLine.toString(), result.toString());
+		assertTrue(longestWordsPerLine.get(4).size()== result.get(4).size());
 	}
+	
+
 }

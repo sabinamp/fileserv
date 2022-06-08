@@ -71,9 +71,9 @@ class FileUtilsTest {
 	    assertThrows(AccessDeniedException.class, () -> {
 	    	List<String> allLines= FileUtils.getLinesInFile("", directoryPath);
      	   
-	    });
-	   
+	    });	   
 	}
+	
 	@Test
 	public void testFileIsNotinUTF8() {
 	 
