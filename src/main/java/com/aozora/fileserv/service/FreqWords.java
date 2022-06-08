@@ -10,18 +10,23 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.aozora.fileserv.exception.FileServiceExceptionHandler;
 import com.aozora.fileserv.model.WordFreqPair;
 
 public class FreqWords {
 
- private static Map<String, Integer> freqResult;
+ //private static Map<String, Integer> freqResult;
 	 
-	 
+	private static final Logger logger = LoggerFactory.getLogger(FreqWords.class);
 	 //count string frequencies in a list
 	 static Map<String, Integer> count(List<String> wordList){
 	        int n = wordList.size();
@@ -43,10 +48,10 @@ public class FreqWords {
 	        Map<String, Integer> result = new HashMap<>();
 	        Pattern pattern = Pattern.compile(FileContentServI.DELIMITER);
 	        
-	            List<String> lines = FileUtils.getLinesInFile(fileName,directoryPath);
+	           List<String> lines = FileUtils.getLinesInFile(fileName,directoryPath);
 	           for(String line: lines){
-	               System.out.println("counting frequencies for the line: "+line);
-	               System.out.println("number of words in the line: "+Arrays.asList(line.split(FileContentServI.DELIMITER)).size());
+	               System.out.println("counting frequencies for the following line: "+line);
+	               
 	               Map<String, Integer> result1= count(Arrays.asList(line.split(FileContentServI.DELIMITER)));
 
 	               for(Map.Entry<String, Integer> entry: result1.entrySet()){
@@ -66,9 +71,9 @@ public class FreqWords {
 	 static Map<Integer,Set<String>> getWordSetByFrequency(String filename, String directoryPath) throws IOException, URISyntaxException{
 		 //ClassPathResource fileResource = new ClassPathResource(filename);
 	        TreeMap<Integer, Set<String>> wordFreqResult = new TreeMap<Integer, Set<String>>();
-	        if(freqResult == null) {
-	        	freqResult = getFrequencies(filename, directoryPath);
-	        }
+	        
+	        Map<String, Integer> freqResult = getFrequencies(filename, directoryPath);
+	        
 	        	        
 	        for( String each: freqResult.keySet()) {
 	            Set<String> wordList = null;
@@ -89,26 +94,39 @@ public class FreqWords {
 	   * the most frequent 2 words from the whole document, these shall be returned.
 	   */
 	  static Map<Integer, Set<String>> getLongestWords(String fileName, String directoryPath) throws IOException, URISyntaxException{
-		  if(freqResult == null) {
-	        	freqResult = getFrequencies(fileName, directoryPath);
-	        }
+		  
+		  Map<String, Integer> freqResult = getFrequencies(fileName, directoryPath);
+	        
 	        //line number and the 2 longest words or frequent words
 	        Map<Integer, Set<String>> resultLines = new HashMap<>();
 
-	        Set<String> longest2WordsSetPerLine= null;
+	        
 	        Pattern pattern = Pattern.compile(FileContentServI.DELIMITER);
 	        try {
 	            List<String> lines = FileUtils.getLinesInFile(fileName, directoryPath);
 	            int currentLineNb=0;
 	            for(String line: lines){
-	               
+	               if(line.length()!= 0) {
+	            	   	             
 	                currentLineNb++;
 	                Map<String, Integer> freqLineResult= count(Arrays.asList(line.split(FileContentServI.DELIMITER)));
 	                TreeMap<Integer, TreeSet<String>> longestWords = getLongestWordsInLine(freqLineResult);
-
-	                longest2WordsSetPerLine = handleMoreThan2StringsSameLength(longestWords);
-	                resultLines.put(currentLineNb,longest2WordsSetPerLine);
-	                System.out.println("current line number: "+currentLineNb +". Added the words: "+longest2WordsSetPerLine);
+	                if(longestWords != null) {
+	                	Set<String> longest2WordsSetPerLine = handleMoreThan2StringsSameLength(longestWords, freqResult);
+	                	if(longest2WordsSetPerLine.size() >0) {
+	                		resultLines.put(currentLineNb,longest2WordsSetPerLine);
+	                		System.out.println("current line number: "+currentLineNb +". Added the words: "+longest2WordsSetPerLine);
+	                		logger.debug("current line number: "+currentLineNb +". Added the words: "+longest2WordsSetPerLine);
+	                	}else {
+	                		logger.debug("current line number: "+currentLineNb + "- empty line");
+	                		System.out.println("current line number: "+currentLineNb + "- empty line");
+	                	}
+	                	
+	                	
+	                }
+	               }else {
+	            	   currentLineNb++;
+	               }	               	                
 	            }
 
 	        } catch (IOException e) {
@@ -164,40 +182,72 @@ public class FreqWords {
 	    
 	  // if there are  more than 2 words of the same length on a line
 	  //filter by frequency of the string
-	  private static Set<String> handleMoreThan2StringsSameLength(TreeMap<Integer, TreeSet<String>> longestWordsMap){
+	  private static Set<String> handleMoreThan2StringsSameLength(TreeMap<Integer, TreeSet<String>> longestWordsMap,
+			  Map<String, Integer> freqResult){
 	        Set<String> result= new HashSet<>();
 	       
 	        List<WordFreqPair> lineWords = new ArrayList<>();
-	        Set<String> wList = longestWordsMap.lastEntry().getValue();
-	        int wordsOfSameLengthNb= (wList != null)?  wList.size() : 0;
-	        System.out.println(" wordsOfSameLengthNb: "+ wordsOfSameLengthNb);
-	        if( wordsOfSameLengthNb > 2){
-	            // if there are  more than 2 words of the same length on a line, get frequency of the string
-	            for( String e: wList){
-	                lineWords.add(new WordFreqPair(e, freqResult.get(e)));
+	        NavigableSet<Integer> descendingKeySet =  longestWordsMap.descendingKeySet();	 
+	        int keySetSize = descendingKeySet.size();
+	        if(keySetSize > 0) {
+	        	Integer[] descendingKeyArray= new Integer[keySetSize];
+		        int index=0;
+		        for(Integer each : descendingKeySet) {
+		        	descendingKeyArray[index]=each;
+		        	index++;
+		        }
+		    
+	           Integer greatestLength = descendingKeyArray[0];
+	           Integer secondGreatestLength= descendingKeyArray[1];
+	           System.out.println(" greatestLength: "+greatestLength +" secondGreatestLength: "+secondGreatestLength);
+	           logger.debug("greatestLength: "+greatestLength +" secondGreatestLength: "+secondGreatestLength);
+	           if( keySetSize==1) {
+	            	logger.debug("all words have the same length");
+	            	TreeSet<String> wordSet= longestWordsMap.get(greatestLength);
+	            	    result.addAll(wordSet);
+	            	   //to do -only 2 words should return
+	            	return result;
 	            }
-	            Collections.sort(lineWords, new Comparator<WordFreqPair>() {
-	                @Override
-	                public int compare(WordFreqPair o1, WordFreqPair o2) {
-	                    return o1.getFrequency() - ((WordFreqPair) o2).getFrequency();
-	                }
-	            });
-	            String currentWord = lineWords.get(wordsOfSameLengthNb - 1).getWord();
-	            String nextWord = lineWords.get(wordsOfSameLengthNb - 2).getWord();
-	            System.out.println("added the word: "+currentWord);
-	            result.add(currentWord);
-	            result.add( nextWord);
-	            System.out.println("added the word: "+currentWord);
-	        }else if (wordsOfSameLengthNb == 2){
-	            //add the longest 2 words in the current line
-	            result.addAll(wList);
-	        }else if(wordsOfSameLengthNb == 1){
-	            result.addAll(wList);
-	            longestWordsMap.pollLastEntry();
-	            TreeSet<String> lastw = longestWordsMap.lastEntry().getValue();
-	            result.add(lastw.first());
+	           Set<String> wList = longestWordsMap.get(greatestLength);
+	     	    int wordsOfSameLengthNb= (wList != null)?  wList.size() : 0;
+	   	        logger.debug(" wordsOfSameLengthNb: "+ wordsOfSameLengthNb);
+	   	     if( wordsOfSameLengthNb > 2){
+		            // if there are  more than 2 words of the same length on a line, get frequency of the string
+		            for( String e: wList){
+		                lineWords.add(new WordFreqPair(e, freqResult.get(e)));
+		            }
+		            Collections.sort(lineWords, new Comparator<WordFreqPair>() {
+		                @Override
+		                public int compare(WordFreqPair o1, WordFreqPair o2) {
+		                    return o1.getFrequency() - ((WordFreqPair) o2).getFrequency();
+		                }
+		            });
+		            String currentWord = lineWords.get(wordsOfSameLengthNb - 1).getWord();
+		            String nextWord = lineWords.get(wordsOfSameLengthNb - 2).getWord();
+		            System.out.println("added the word: "+currentWord);
+		            result.add(currentWord);
+		            result.add( nextWord);
+		            System.out.println("added the word: "+currentWord);
+		        }else if (wordsOfSameLengthNb == 2){
+		            //add the longest 2 words in the current line
+		            result.addAll(wList);
+		        }else if(wordsOfSameLengthNb == 1){
+		            result.addAll(wList);
+		            if(secondGreatestLength != null) {
+		            	 TreeSet<String> lastw = longestWordsMap.get(secondGreatestLength);
+		 	            if(lastw != null) {
+		 	            	result.add(lastw.first());
+		 	            }
+		            }
+		           
+			        	            
 
-	        }
+		        }
+	           
+	        }          	  
+                   
+	      
+	       
 	        return result;
 	    }
 

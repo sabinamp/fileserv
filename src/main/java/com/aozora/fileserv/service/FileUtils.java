@@ -1,6 +1,7 @@
 package com.aozora.fileserv.service;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -11,8 +12,10 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,26 +39,39 @@ public class FileUtils {
 
         return reader;
     }
-	/*
-	 * public static Path getPath(String fileName) { try { return
-	 * Paths.get(FileUtils.class.getResource(fileName).toURI()); } catch
-	 * (URISyntaxException e) { throw new IllegalArgumentException(e); } }
-	 */
+	
 
-    public static List<String> getLinesInFile(String fileName, String directoryPath) throws IOException, URISyntaxException {
+    public static List<String> getLinesInFile(String fileName, String directoryPath) throws IOException, NoSuchFileException {
     	logger.debug("entering "+FileUtils.class.getName()+"the method: getLinesInFile ");
+    	
     	Path fPath=null;
+    	
     	try {    		
     		fPath = Paths.get(directoryPath).resolve(fileName);
-    		System.out.println("FileUtils fPath is: "+fPath);
+    		
     		logger.debug("fPath:" +fPath);
     	}catch(NullPointerException e) {
     		e.printStackTrace();
     		throw new NoSuchFileException(e.getMessage());
     	}
-    	logger.debug("exiting "+FileUtils.class.getName()+"the method: getLinesInFile ");
-        return Files.lines(fPath, StandardCharsets.UTF_8).collect(Collectors.toList());
-    	//return Files.readAllLines(fPath);
+    	List<String> lines = new ArrayList<>();
+    	File file = fPath.toFile();
+    	if(file.exists() && file.canRead()) {
+			
+    		BufferedReader bufferedReader = Files.newBufferedReader(fPath);
+    		
+            String curLine;
+            while ((curLine = bufferedReader.readLine()) != null){
+                lines.add(curLine);
+            }
+            bufferedReader.close();
+    	}else {
+    		throw new NoSuchFileException("this is not an existing file or it is not readable");
+    	}
+    	logger.debug("exiting "+FileUtils.class.getName()+"the method: getLinesInFile() ");
+    	
+        return lines;
+    	
     }
 
 }

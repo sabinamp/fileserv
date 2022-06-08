@@ -12,7 +12,7 @@ import java.util.TreeMap;
  *
  */
 public interface FileContentServI {
-	static final String DELIMITER = "\\s*,\\s*|,\\s+|\\s+|\\.\\s*|\\?\\s*|\\!\\s*";
+	static final String DELIMITER = "\\s*,\\s*|,\\s+|\\s+|\\.\\s*|\\?\\s*|\\!\\s*|\\:\\s*";
 	
 	TreeMap<Integer, Set<String>> getFirstNFreqWords(String filename, String directoryPath, int n);
 	

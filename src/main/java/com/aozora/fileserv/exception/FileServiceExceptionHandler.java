@@ -12,12 +12,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.PatternSyntaxException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import com.aozora.fileserv.controller.FileContentController;
 import com.aozora.fileserv.payload.ResponseMessage;
 
 /**
@@ -25,7 +28,7 @@ import com.aozora.fileserv.payload.ResponseMessage;
  *
  */
 public class FileServiceExceptionHandler {
-
+	private static final Logger log = LoggerFactory.getLogger(FileServiceExceptionHandler.class);
 	/**
 	 * 
 	 */
@@ -36,6 +39,7 @@ public class FileServiceExceptionHandler {
 	@ExceptionHandler(value = FileContentServiceException.class)
 	@ResponseStatus( value = HttpStatus.INTERNAL_SERVER_ERROR)
 	public Map<String, String> handleFileServiceErrors(FileContentServiceException ex){
+		log.error("received error ({}) with message: {}", ex.getCause(), ex.getMessage());
 		 Map<String, String> errors = new HashMap<>();
 		  String errorMessage = ex.getMessage();
 	        errors.put("message", errorMessage);
@@ -47,6 +51,7 @@ public class FileServiceExceptionHandler {
 	@ExceptionHandler(value = FileStorageException.class)
 	@ResponseStatus( value = HttpStatus.NOT_FOUND)
 	public Map<String, String> handleFileStorageServiceErrors(FileStorageException ex){
+		log.error("received error ({}) with message: {}", ex.getCause(), ex.getMessage());
 		 Map<String, String> errors = new HashMap<>();
 		  String errorMessage = ex.getMessage();
 	        errors.put("message", errorMessage);
@@ -57,14 +62,15 @@ public class FileServiceExceptionHandler {
 	
 	@ResponseStatus(HttpStatus.EXPECTATION_FAILED)
 	@ExceptionHandler(MaxUploadSizeExceededException.class)
-	public ResponseEntity<ResponseMessage> handleMaxSizeException(MaxUploadSizeExceededException exc) {
-		
+	public ResponseEntity<ResponseMessage> handleMaxSizeException(MaxUploadSizeExceededException ex) {
+		log.error("received error ({}) with message: {}", ex.getCause(), ex.getMessage());
 	    return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new ResponseMessage("File too large!"));
 	}
 	
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(PatternSyntaxException.class)
 	public Map<String, String> handleValidationExceptions(PatternSyntaxException ex) {
+		log.error("received error ({}) with message: {}", ex.getCause(), ex.getMessage());
 	    Map<String, String> errors = new HashMap<>();
 	    String errorMessage = ex.getMessage();
         errors.put("message", errorMessage);
@@ -76,6 +82,7 @@ public class FileServiceExceptionHandler {
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(InvalidPathException.class)
 	public Map<String, String> handleFileRelatedExceptions(InvalidPathException ex) {
+		log.error("received error ({}) with message: {}", ex.getCause(), ex.getMessage());
 	    Map<String, String> errors = new HashMap<>();
 	    String errorMessage = ex.getMessage();
         errors.put("message", errorMessage);
@@ -87,6 +94,7 @@ public class FileServiceExceptionHandler {
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 	@ExceptionHandler(IOException.class)
 	public Map<String, String> handleIOExceptions(IOException ex) {
+		log.error("received error ({}) with message: {}", ex.getCause(), ex.getMessage());
 	    Map<String, String> errors = new HashMap<>();
 	    String errorMessage = ex.getMessage();
         errors.put("message", errorMessage);
@@ -96,9 +104,10 @@ public class FileServiceExceptionHandler {
 	    return errors;
 	}
 	
-	@ResponseStatus(HttpStatus.NOT_FOUND)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(NoSuchFileException.class)
-	public Map<String, String> handleFileRelatedExceptions(NoSuchFileException ex) {
+	public Map<String, String> handleNoSuchFileExceptions(NoSuchFileException ex) {
+		log.error("received error ({}) with message: {}", ex.getCause(), ex.getMessage());
 	    Map<String, String> errors = new HashMap<>();
 	    String errorMessage = ex.getMessage();
         errors.put("message", errorMessage);
@@ -111,6 +120,7 @@ public class FileServiceExceptionHandler {
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(URISyntaxException.class)
 	public Map<String, String> handleValidationExceptions(URISyntaxException ex) {
+		log.error("received error ({}) with message: {}", ex.getInput(), ex.getMessage());
 		 Map<String, String> errors = new HashMap<>();
 		    String errorMessage = "input: "+ex.getInput()+ ex.getMessage();
 	        errors.put("message", errorMessage);
@@ -123,6 +133,7 @@ public class FileServiceExceptionHandler {
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(PatternSyntaxException.class)
 	public Map<String, String> handlePatternValidationExceptions(PatternSyntaxException ex) {
+		log.error("received error ({}) with message: {}", "Pattern: "+ ex.getPattern(), ex.getMessage());
 	    Map<String, String> errors = new HashMap<>();
 	    String errorMessage = ex.getMessage();
         errors.put("message", errorMessage);
@@ -134,6 +145,7 @@ public class FileServiceExceptionHandler {
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(InvalidPathException.class)
 	public Map<String, String> handleFilePathRelatedExceptions(InvalidPathException ex) {
+		log.error("received error ({}) with message: {}", ex.getCause(), ex.getMessage());
 	    Map<String, String> errors = new HashMap<>();
 	    String errorMessage = ex.getMessage();
         errors.put("message", errorMessage);
@@ -146,6 +158,7 @@ public class FileServiceExceptionHandler {
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(MalformedURLException.class)
 	public Map<String, String> handleFileRelatedExceptions(MalformedURLException ex) {
+		log.error("received error ({}) with message: {}", ex.getCause(), ex.getMessage());
 	    Map<String, String> errors = new HashMap<>();
 	    String errorMessage = ex.getMessage();
         errors.put("errorMessage", errorMessage);

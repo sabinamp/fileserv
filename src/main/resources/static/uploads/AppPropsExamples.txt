@@ -1,5 +1,5 @@
 In Spring Boot, application.properties is the default file from which configuration values are picked up. Spring Boot can pick the application.properties file from anywhere on the classpath. Typically, application.properties is located at src\main\resources.
- examples of customizing Spring Security using configuration in application.properties:
+ examples of customising Spring Security using configuration in application.properties:
      security.basic.enabled=false
     management.security.enabled=false
     security.user.name=user-name

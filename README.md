@@ -44,5 +44,21 @@
 * POST http://localhost:8082/fileservice/content/freqwords?n=10
 
 - Request body json: { "fileName": "words.txt" }
-- ResponseBody ["[branch] has the frequency 1","[coding, I] has the frequency 2","[house] has the frequency 7","[Christmas, gardening, garden] has the frequency 9","[home] has the frequency 14","[love] has the frequency 15"]
+- ResponseBody : [
+    "[branch] has the frequency 1",
+    "[coding, I] has the frequency 2",
+    "[house] has the frequency 7",
+    "[Christmas, gardening, garden] has the frequency 9",
+    "[home] has the frequency 14",
+    "[love] has the frequency 15"
+]
 
+* POST http://localhost:8082/fileservice/content/longestwords
+- Request body json: { "fileName": "PathMatcher.txt" }
+- ResponseBody : 
+[
+    "the current line number is 1. The 2 longest words are: [PathMatcher, implementation]",
+    "the current line number is 4. The 2 longest words are: [PathMatcher, interface]"
+]
+Content-Type: application/json
+Accept: application/json
