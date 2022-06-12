@@ -6,6 +6,8 @@ package com.aozora.fileserv.controller;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -35,15 +37,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author SabinaM
  *
  */
+
 @RestController
 @RequestMapping("/files")
 public class FileStorageController {
-	private Set<Resource> filesInDirectory = new HashSet<>();
-	private Set<String> mFiles = new HashSet<>();
 	
-	
+	private Set<String> filesInDirectory = new HashSet<>();	
 	private FileStorageServI fileStorageService;
-
+	private static final Logger logger = LoggerFactory.getLogger(FileStorageController.class);
+	
 
 	/**
 	 * 
@@ -53,39 +55,36 @@ public class FileStorageController {
 	}
 
 	
-	//POST http://localhost:8082/matchedfiles?syntax="regex"
-	//pattern as plain text in request body
+	//POST http://localhost:8082/fileservice/files/matchedfiles?syntax="regex"
 	@PostMapping(value = "/matchedfiles", consumes = MediaType.APPLICATION_JSON_VALUE,produces = {MediaType.APPLICATION_JSON_VALUE})
 	ResponseEntity<Set<String>> getAllFilesThatMatchRegex(@RequestBody String jsonPatternAndDirectory,
 	@RequestParam(required = false, defaultValue="regex") String syntax){
+		
 		ObjectMapper objectMapper = new ObjectMapper();		
 		JsonNode jsonNode = null;
 		try {
 			jsonNode = objectMapper.readTree(jsonPatternAndDirectory);
-			String directory= jsonNode.get("directory").asText();
+			 String directory= jsonNode.get("directory").asText();			
 			 String pattern = jsonNode.get("pattern").asText();
-			 if (!(syntax.equalsIgnoreCase("glob") || syntax.equalsIgnoreCase("regex"))) {			
-				  return new ResponseEntity<Set<String>>(mFiles, HttpStatus.BAD_REQUEST);
-			 }
-			 filesInDirectory = fileStorageService.getAllThatMatchRegex(pattern, syntax, directory);
-			 filesInDirectory.forEach( e -> mFiles.add(e.getFilename()));
-			 if( mFiles == null || mFiles.size() == 0) {			
-				return new ResponseEntity<Set<String>>(mFiles, HttpStatus.NOT_FOUND);			
+			 
+			 filesInDirectory = fileStorageService.getAllFileNamesThatMatchRegex(pattern, syntax, directory);
+			 
+			 if( filesInDirectory == null || filesInDirectory.size() == 0) {			
+				return new ResponseEntity<Set<String>>(filesInDirectory, HttpStatus.NOT_FOUND);			
 			}else {
-				   return new ResponseEntity<Set<String>>(mFiles, HttpStatus.OK);
+				   return new ResponseEntity<Set<String>>(filesInDirectory, HttpStatus.OK);
 			}
 		} catch (JsonMappingException e1) {		
 			e1.printStackTrace();
-			
+			return new ResponseEntity<Set<String>>(filesInDirectory, HttpStatus.BAD_REQUEST);
 		} catch (JsonProcessingException e1) {			
 			e1.printStackTrace();
-		}
-		 return new ResponseEntity<Set<String>>(mFiles, HttpStatus.OK);		 
+			return new ResponseEntity<Set<String>>(filesInDirectory, HttpStatus.BAD_REQUEST);
+		}		 
 		
 	}
 	
-	@GetMapping("/{staticFolder}")
-	
+	@GetMapping("/{staticFolder}")	
 	public ResponseEntity<Resource> getFile(@RequestParam(required=true) String file, @PathVariable String staticFolder) {
 		Resource fileResource = null;
 		if(staticFolder=="data") {
@@ -99,16 +98,15 @@ public class FileStorageController {
 	        .body(fileResource);
 	}
 	
-	@PostMapping("/upload")
-	public UploadFileResponse uploadFile(@RequestParam("file") MultipartFile file) {
-	        String fileName = fileStorageService.save(file);
-
-	        String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-	                .path("/uploads/")
-	                .path(fileName)
-	                .toUriString();
-
-	        return new UploadFileResponse(fileName, fileDownloadUri,
-	                file.getContentType(), file.getSize());
-	}
+	/*
+	 * @PostMapping("/upload") public UploadFileResponse
+	 * uploadFile(@RequestParam("file") MultipartFile file) { String fileName =
+	 * fileStorageService.save(file);
+	 * 
+	 * String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+	 * .path("/uploads/") .path(fileName) .toUriString();
+	 * 
+	 * return new UploadFileResponse(fileName, fileDownloadUri,
+	 * file.getContentType(), file.getSize()); }
+	 */
 }

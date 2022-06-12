@@ -1,0 +1,208 @@
+/**
+ * 
+ */
+package com.aozora.fileserv.controller;
+
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.lang.annotation.Annotation;
+import java.net.MalformedURLException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.json.JsonContent;
+import org.springframework.boot.test.json.JsonContentAssert;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+
+import com.aozora.fileserv.config.FileServiceProperties;
+import com.aozora.fileserv.service.FileStorageService;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonCreator.Mode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+/**
+ * @author SabinaM
+ *
+ */
+
+
+ 
+@WebMvcTest(FileStorageController.class)
+public class FileStorageControllerTest {
+	 private String fileName;
+	 private String dataDirectoryPath;
+	 private Set<String> expectedFilenames;
+	 private Set<Resource> expectedResources;
+	 
+	 @Autowired
+	 private MockMvc mockMvc;
+	 
+	 private String pattern;
+	 private String patternSyntax;	
+	 
+	 @MockBean
+	 private FileStorageService fileStorageService;
+	 
+	 @BeforeEach
+	 private void setUpTestData() {
+		    pattern ="^[a-zA-Z0-9._ -]+\\.(doc|pdf|csv|txt)$";
+		    patternSyntax = "regex";
+		
+		    expectedFilenames = new HashSet<>();
+			expectedFilenames.add("words.txt");
+			expectedFilenames.add("StoreAddressList.pdf");
+			expectedFilenames.add("8-Reasons-AStartupOverACorporateJob.pdf");
+			expectedFilenames.add("PathMatcher.txt");
+			expectedFilenames.add("50-contacts.csv" );
+			
+			fileName = "PathMatcher.txt";			
+			dataDirectoryPath = "C:/workspace_sts4-14/fileserv/bin/main/static/data/";	
+			
+			expectedResources = new HashSet<>();
+			Path fileStorageLocation =Paths.get(dataDirectoryPath);
+			
+			Path pathMatcherFilePath = fileStorageLocation.resolve(fileName).normalize();
+			Path wordsFilePath = fileStorageLocation.resolve("words.txt").normalize();
+			Path contactsFilePath = fileStorageLocation.resolve("50-contacts.csv").normalize();
+			Path reasonsFilePath = fileStorageLocation.resolve("8-Reasons-AStartupOverACorporateJob.pdf").normalize();
+			Path addressListFilePath = fileStorageLocation.resolve("StoreAddressList.pdf").normalize();
+		      try {
+				Resource resourcePathMatcher = new UrlResource(pathMatcherFilePath.toUri());
+				Resource resourceWords = new UrlResource(wordsFilePath.toUri());
+				Resource contactsResource= new UrlResource(contactsFilePath.toUri());
+				Resource reasonsResource = new UrlResource(reasonsFilePath.toUri());
+			
+				Resource addressListResource= new UrlResource(addressListFilePath.toUri());
+				expectedResources.add(resourcePathMatcher);
+				expectedResources.add(resourceWords);
+				expectedResources.add(contactsResource);
+				expectedResources.add(reasonsResource);
+				expectedResources.add(addressListResource);
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
+		      
+		
+		 
+	 }
+	 
+	 
+	 @Test
+	 void givenPatternWhenGetAllFilesThatMatchRegex_then200() throws Exception {
+		 when(fileStorageService.getAllThatMatchRegex(pattern, patternSyntax, dataDirectoryPath))
+		 	.thenReturn(expectedResources);
+		 when(fileStorageService.getAllFileNamesThatMatchRegex(pattern, patternSyntax, dataDirectoryPath))
+		 	.thenReturn(expectedFilenames);
+		
+		 		
+		//String jsonPatternAndDirectory= "{\"pattern\": \"^[a-zA-Z0-9._ -]+\\.(doc|pdf|csv|txt)$\",\"directory\": \"C:/workspace_sts4-14/fileserv/bin/main/static/data\"}";
+		MultiValueMap<String, String> reqParams = new LinkedMultiValueMap<>();
+		reqParams.add("syntax", "regex");
+		
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode patternAndDirectoryJsonNode = mapper.createObjectNode();
+		patternAndDirectoryJsonNode.put("pattern", "^[a-zA-Z0-9._ -]+\\.(doc|pdf|csv|txt)$");
+		patternAndDirectoryJsonNode.put("directory", dataDirectoryPath);
+		MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/fileservice/files/matchedfiles")
+					.content(patternAndDirectoryJsonNode.toString())			
+					.contentType(MediaType.APPLICATION_JSON)
+					 .params(reqParams)
+				    .accept(MediaType.APPLICATION_JSON))
+				    .andExpect(status().isOk())	
+				    .andExpect(jsonPath("$.size()").value(expectedFilenames.size()))
+				    .andExpect(jsonPath("$[*]", hasItem("words.txt")))
+				    .andExpect(content().string(contains("words.txt")))
+				    .andReturn();
+			 		
+		 verify(fileStorageService, times(1)).getAllFileNamesThatMatchRegex(pattern, patternSyntax, dataDirectoryPath);
+		 assertNull(result.getResponse().getContentAsString());
+		 assertTrue(result.getResponse().getContentType()==MediaType.APPLICATION_JSON_VALUE);
+		
+			 
+	 }
+	 
+	 @Test
+	 void givenNoPatternWhenGetAllFilesThatMatchRegex_then400() throws Exception {
+		 MultiValueMap<String, String> reqParams = new LinkedMultiValueMap<>();
+			reqParams.add("syntax", "regex");
+		 when(fileStorageService.getAllFileNamesThatMatchRegex(pattern, patternSyntax, dataDirectoryPath))
+		 	.thenReturn(expectedFilenames);		
+		 		
+				
+		mockMvc.perform(MockMvcRequestBuilders.post("/fileservice/files/matchedfiles")	
+				.content("{}").contentType(MediaType.APPLICATION_JSON)
+				.params(reqParams)
+				.accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isBadRequest());
+			 		
+		 
+	 }
+	 @Test
+	 void givenPatternWhenGetAllFilesThatMatchRegex_thenReturnNoContent() throws Exception {
+		 MultiValueMap<String, String> reqParams = new LinkedMultiValueMap<>();
+			reqParams.add("syntax", "regex");
+		 when(fileStorageService.getAllFileNamesThatMatchRegex(pattern, patternSyntax, dataDirectoryPath))
+		 	.thenReturn(Collections.EMPTY_SET);		
+		 		
+				
+		mockMvc.perform(MockMvcRequestBuilders.post("/fileservice/files/matchedfiles")	
+				.content("{}").contentType(MediaType.APPLICATION_JSON)
+				.params(reqParams)
+				.accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isNoContent());
+			 		
+		 
+	 }
+		/*
+		 * @Test public void testSaveUploadedFile() throws Exception { MockMultipartFile
+		 * multipartFile = new MockMultipartFile("file", "test.txt", "text/plain",
+		 * "Spring Framework".getBytes());
+		 * this.mockMvc.perform(multipart("/").file(multipartFile))
+		 * .andExpect(status().isFound()) .andExpect(header().string("Location", "/"));
+		 * 
+		 * when(this.fileStorageService.save(multipartFile)).thenReturn("test.txt"); }
+		 */
+	 
+	 @Test
+	  void givenGlobPatternAndGlobSyntax_ThenCorrect() {
+		 
+	 }
+
+}

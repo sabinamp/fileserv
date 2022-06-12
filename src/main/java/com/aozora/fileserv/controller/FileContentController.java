@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.aozora.fileserv.model.WordFreqPair;
 import com.aozora.fileserv.payload.UploadFileResponse;
 import com.aozora.fileserv.service.FileContentServI;
 import com.aozora.fileserv.service.FileStorageServI;
@@ -42,6 +44,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeCreator;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 
 /**
@@ -61,7 +67,7 @@ public class FileContentController {
 	private static final Logger logger = LoggerFactory.getLogger(FileContentController.class);
 	
 	private UploadFileResponse uploadResponse;
-	private TreeMap<Integer, Set<String>> words;
+	private TreeMap<Integer, Set<WordFreqPair>> words;
 	
 	public FileContentController() {
 		super();
@@ -69,64 +75,76 @@ public class FileContentController {
 	}
 
 
-	@PostMapping( value = "upload/freqwords", consumes = MediaType.TEXT_PLAIN_VALUE, produces = {MediaType.APPLICATION_JSON_VALUE})
-	public ResponseEntity<String> getFirstNFreqWords(@RequestParam("file") MultipartFile file, @RequestParam(required=true) int n) {		
-		 String fileName = fileStorageService.save(file);
-
-	        String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-	                .path("/downloads/")
-	                .path(fileName)
-	                .toUriString();
-
-	      uploadResponse=  new UploadFileResponse(fileName, fileDownloadUri, file.getContentType(), file.getSize());
-	  
-		ResponseEntity<String> response = null;
-		StringBuilder builder = new StringBuilder();
-		String directoryPath = fileStorageService.getUploadDir();
-		words = fileContentService.getFirstNFreqWords(uploadResponse.getFileName(),directoryPath, n);
-		words.entrySet().forEach( s -> builder.append(s.getValue()+" has the frequency: "+s.getKey() +" \n"));		
-
-		
-		String output = builder.toString();
-		if(output != null && !output.isEmpty()) {
-			response = new ResponseEntity<String>(output, HttpStatus.OK);
-		}
-	 				
-		return response;
-	}
+	/*
+	 * @PostMapping( value = "upload/freqwords", consumes =
+	 * MediaType.TEXT_PLAIN_VALUE, produces = {MediaType.APPLICATION_JSON_VALUE})
+	 * public ResponseEntity<String> getFirstNFreqWords(@RequestParam("file")
+	 * MultipartFile file, @RequestParam(required=true) int n) { String fileName =
+	 * fileStorageService.save(file);
+	 * 
+	 * String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+	 * .path("/downloads/") .path(fileName) .toUriString();
+	 * 
+	 * uploadResponse= new UploadFileResponse(fileName, fileDownloadUri,
+	 * file.getContentType(), file.getSize());
+	 * 
+	 * ResponseEntity<String> response = null; StringBuilder builder = new
+	 * StringBuilder(); String directoryPath = fileStorageService.getUploadDir();
+	 * words = fileContentService.getFirstNFreqWords(uploadResponse.getFileName(),
+	 * directoryPath, n); words.entrySet().forEach( s ->
+	 * builder.append(s.getValue()+" has the frequency: "+s.getKey() +" \n"));
+	 * 
+	 * 
+	 * String output = builder.toString(); if(output != null && !output.isEmpty()) {
+	 * response = new ResponseEntity<String>(output, HttpStatus.OK); }
+	 * 
+	 * return response; }
+	 */
 	
 	@PostMapping( value = "/freqwords", consumes={MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
-	public ResponseEntity<List<String>> getFirstNFreqWords(@RequestParam(required=true) int n,
-			@RequestBody String jsonFileName) {	
+	public ResponseEntity<String> getFirstNFreqWords(@RequestParam(required=true) int n,
+			@RequestBody String jsonFileNameAndDir) {	
 		ObjectMapper objectMapper = new ObjectMapper();		
 		JsonNode jsonFileNode = null;
 		List<String> frequenciesW = new ArrayList<>();
-		ResponseEntity<List<String>> response = null;
+		ResponseEntity<String> response = null;
 		try {
-			jsonFileNode = objectMapper.readTree(jsonFileName);
-			String fileName = jsonFileNode.get("fileName").asText();
-			
-			String directoryPath = fileStorageService.getUploadDir();
+			jsonFileNode = objectMapper.readTree(jsonFileNameAndDir);
+			String fileName = jsonFileNode.get("fileName").asText();			
+			String directoryPath = jsonFileNode.get("directory").asText();
 			
 			words = fileContentService.getFirstNFreqWords(fileName,directoryPath, n);
-			words.entrySet().forEach( 
-					w -> frequenciesW.add( ""+w.getValue()+" have the frequency "+w.getKey())
-							);		
-
-			if(!frequenciesW.isEmpty()) {
+			
+			if(!words.isEmpty()) {
 				MultiValueMap<String,String> headers= new HttpHeaders();
 				headers.set("eTag", Long.valueOf(fileName.length()+directoryPath.length())+"111");
-				response = new ResponseEntity<List<String>>(frequenciesW, headers,HttpStatus.OK);
+				ObjectMapper objectMapper2 = new ObjectMapper();		
+				
+				ArrayNode frequenciesWArrayNode=objectMapper2.createArrayNode();
+				words.entrySet().forEach(each-> {
+					ObjectNode eachNode = objectMapper2.createObjectNode() ;
+					Set<WordFreqPair> pairs= each.getValue();
+					Set<String> sameFreqWords= new HashSet<>();
+					pairs.forEach(p-> sameFreqWords.add(p.getWord()));
+					eachNode.put("the frequency: "+each.getKey(), ""+sameFreqWords);
+					frequenciesWArrayNode.add(eachNode);
+				});
+				String frequenciesWJSON = objectMapper2.writerWithDefaultPrettyPrinter().writeValueAsString(frequenciesWArrayNode);
+				response = new ResponseEntity<String>(frequenciesWJSON, headers,HttpStatus.OK);
 								
 			}
 		} catch (JsonMappingException e) {			
 			e.printStackTrace();
 			 logger.debug(" JsonProcessingException caught"+e.getMessage());
-			 response = new ResponseEntity<List<String>>(frequenciesW, HttpStatus.BAD_REQUEST);
+			 response = ResponseEntity.badRequest().body("Bad request. Incorrect JSON");
 		} catch (JsonProcessingException e) {
 			 logger.debug(" JsonProcessingException caught"+e.getMessage());
 			e.printStackTrace();
-			response = new ResponseEntity<List<String>>(frequenciesW, HttpStatus.BAD_REQUEST);
+			response = ResponseEntity.badRequest().body("Bad request. Incorrect JSON");
+		} catch (NoSuchFileException e) {
+			 logger.debug(" NoSuchFileException caught"+e.getMessage());
+			e.printStackTrace();
+			response = ResponseEntity.badRequest().body("Bad request. Incorrect file name or Incorrect directory path");
 		}
 		
 	 				
@@ -135,37 +153,49 @@ public class FileContentController {
 	
 	
 	@PostMapping( value = "/longestwords", consumes={MediaType.ALL_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
-	public ResponseEntity<List<String>> getLongestFreqWords(@RequestBody String jsonFileName) {
+	public ResponseEntity<String> getLongestFreqWords(@RequestBody String jsonFileNameAndDir) {
 		ObjectMapper objectMapper = new ObjectMapper();		
 		JsonNode jsonFileNode = null;
 
-		ResponseEntity<List<String>> response = null;
-		List<String> longestW = new ArrayList<>();
+		ResponseEntity<String> response = null;
+	
 		try {
-			jsonFileNode = objectMapper.readTree(jsonFileName);
+			jsonFileNode = objectMapper.readTree(jsonFileNameAndDir);
 			String fileName = jsonFileNode.get("fileName").asText();
-			
-			String directoryPath = fileStorageService.getUploadDir();
-			
+			String directoryPath = jsonFileNode.get("directory").asText();
+									
 			Map<Integer, Set<String>> lwords = fileContentService.getLongestWords(fileName, directoryPath);
-			if(lwords != null && lwords.size() != 0) {
-				lwords.entrySet().forEach( 
-						w -> longestW.add( "the current line number: "+w.getKey()+". The 2 longest words are: "
-				+w.getValue()) );
-			}
+			
 					
-			if(!longestW.isEmpty()) {
+			if(lwords != null && lwords.size() != 0 && !lwords.isEmpty()) {
 				MultiValueMap<String,String> headers= new HttpHeaders();
 				headers.set("eTag", Long.valueOf(fileName.length() + directoryPath.length())+"101");
-				response = new ResponseEntity<List<String>>(longestW, headers,HttpStatus.OK);
+				
+				ObjectMapper objectMapper3 = new ObjectMapper();			
+				
+				ArrayNode longestWArrayNode=objectMapper3.createArrayNode();
+				lwords.entrySet().forEach(each-> {
+					ObjectNode eachNode = objectMapper3.createObjectNode() ;
+					Set<String> longestSet = each.getValue();
+					eachNode.put("the current line number: "+each.getKey(), ""+longestSet);
+					longestSet.forEach( w -> eachNode.put("length "+w.length(), w));
+					longestWArrayNode.add(eachNode);
+				});
+				String longestWJSON = objectMapper3.writerWithDefaultPrettyPrinter().writeValueAsString(longestWArrayNode);
+				response = new ResponseEntity<String>(longestWJSON, headers,HttpStatus.OK);
 								
 			}
-		} catch (JsonMappingException e) {
+		} catch (JsonMappingException e) {			
 			e.printStackTrace();
-			response = new ResponseEntity<List<String>>(longestW, HttpStatus.BAD_REQUEST);
+			response = ResponseEntity.badRequest().body("Bad request.Incorrect JSON");
 		} catch (JsonProcessingException e) {
+			
 			e.printStackTrace();
-			response = new ResponseEntity<List<String>>(longestW, HttpStatus.BAD_REQUEST);
+			response = ResponseEntity.badRequest().body("Bad request. Incorrect JSON");
+		} catch (NoSuchFileException e) {
+			
+			e.printStackTrace();			
+			response = ResponseEntity.badRequest().body("Bad request. Wrong file name or wrong directory path");
 		}	
 		
 		return response;	

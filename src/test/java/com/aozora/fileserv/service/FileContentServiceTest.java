@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.FileNotFoundException;
 import java.net.URISyntaxException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.NoSuchFileException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.aozora.fileserv.model.WordFreqPair;
 
 /**
  * @author SabinaM
@@ -35,7 +38,7 @@ public class FileContentServiceTest {
 	private String fileName;
 	private String directoryPath;
 	private Map<Integer, Set<String>> longestWordsPerLine = new TreeMap<Integer,Set<String>>();
-	Map<Integer, Set<String>> freqWords = new TreeMap<Integer,Set<String>>();
+	Map<Integer, Set<WordFreqPair>> freqWords = new TreeMap<Integer,Set<WordFreqPair>>();
 	/**
 	 * [
     "the current line number: 1. The 2 longest words are: [PathMatcher, implementation]",
@@ -79,31 +82,32 @@ public class FileContentServiceTest {
 		 * "[Christmas, gardening, garden] have the frequency 9",
 		 * "[home] have the frequency 14", "[love] have the frequency 15" ]
 		 */
-		Set<String> freq1= new HashSet<>();
-		freq1.add("branch");	
+		Set<WordFreqPair> freq1= new HashSet<>();
+		freq1.add(new WordFreqPair("branch", 1));	
 		freqWords.put(1, freq1);
 		
-		Set<String> freq2= new HashSet<>();
-		freq2.add("coding");
-		freq2.add("I");
+		Set<WordFreqPair> freq2= new HashSet<>();
+		freq2.add(new WordFreqPair("coding", 2));
+		freq2.add(new WordFreqPair("I", 2));
 		freqWords.put(2, freq2);
 		
-		Set<String> freq3= new HashSet<>();
-		freq3.add("house");		
+		Set<WordFreqPair> freq3= new HashSet<>();
+		freq3.add(new WordFreqPair("house", 7));		
 		freqWords.put(7, freq3);
 		
-		Set<String> freq4= new HashSet<>();
-		freq4.add("home");		
+		Set<WordFreqPair> freq4= new HashSet<>();
+		freq4.add(new WordFreqPair("home", 14));		
 		freqWords.put(14, freq4);
 		
-		Set<String> freq5= new HashSet<>();
-		freq5.add("love");		
+		Set<WordFreqPair> freq5= new HashSet<>();
+		freq5.add(new WordFreqPair("love", 15));		
 		freqWords.put(15, freq5);
+		
 		//[Christmas, gardening, garden]
-		Set<String> freq6= new HashSet<>();
-		freq6.add("Christmas");	
-		freq6.add("gardening");
-		freq6.add("garden");
+		Set<WordFreqPair> freq6= new HashSet<>();
+		freq6.add(new WordFreqPair("Christmas", 9));	
+		freq6.add(new WordFreqPair("gardening", 9));
+		freq6.add(new WordFreqPair("garden", 9));
 		freqWords.put(9, freq6);
 		
 	}
@@ -112,7 +116,10 @@ public class FileContentServiceTest {
 	void givenFileWhenGetFirstNFreqWords_ThenCorrect() {
 
 		
-		Map<Integer, Set<String>> result =fileContentService.getFirstNFreqWords("words.txt", directoryPath,10);
+		Map<Integer, Set<WordFreqPair>> result;
+		try {
+			result = fileContentService.getFirstNFreqWords("words.txt", directoryPath,10);
+		
 		assertTrue(freqWords.size() == result.size());
 		assertNotEquals(0, result.size(), "The result cannot be 0");
 		assertEquals(freqWords.get(15), result.get(15));
@@ -124,16 +131,27 @@ public class FileContentServiceTest {
 		assertEquals(freqWords.get(7).size(), result.get(7).size());
 		assertNotEquals(0, result.get(7).size(), "The result cannot be 0");
 		assertEquals(freqWords.get(9).size(), result.get(9).size());
+		} catch (NoSuchFileException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	 
 
 	@Test
 	void givenFileWhenGettingLongestWordsPerLine_ThenCorrect() {
-		Map<Integer, Set<String>> result =fileContentService.getLongestWords(fileName, directoryPath);
+		Map<Integer, Set<String>> result;
+		try {
+			result = fileContentService.getLongestWords(fileName, directoryPath);
+		
 		assertTrue(longestWordsPerLine.size()== result.size());
 		assertNotEquals(0, result.size(), "The result cannot be 0");
 		assertEquals(longestWordsPerLine.toString(), result.toString());
 		assertTrue(longestWordsPerLine.get(4).size()== result.get(4).size());
+		} catch (NoSuchFileException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 

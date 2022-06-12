@@ -24,7 +24,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.aozora.fileserv.config.FileServiceProperties;
@@ -36,6 +35,9 @@ import com.aozora.fileserv.exception.FileStorageException;
  */
 @Service
 public class FileStorageService implements FileStorageServI {
+	/*
+	 * @Autowired private ServerConfigFactory configFactory;
+	 */
 	@Autowired
 	private FileServiceProperties serviceProperties;
 
@@ -51,21 +53,21 @@ public class FileStorageService implements FileStorageServI {
 		return this.serviceProperties.getUploadDir();
 	}
 
-
-	@Override
-	public String save(MultipartFile file) {
-		Path fileStorageLocation =Paths.get(getUploadDir());
-		// Normalize file name
-        String fileName = StringUtils.cleanPath(file.getOriginalFilename());
-        Path targetLocation = fileStorageLocation.resolve(fileName);
-		try {
-		      Files.copy(file.getInputStream(), targetLocation,StandardCopyOption.REPLACE_EXISTING);
-		 } catch (IOException e) {
-			 throw new FileStorageException("Could not save file " + fileName + ". Please try again!"+ e.getMessage());
-		   
-		    }
-		return file.getName();
+	public String getDIRECTORY_PATH() {
+		return this.serviceProperties.getDIRECTORY_PATH();
 	}
+	/*
+	 * @Override public String save(MultipartFile file) { Path fileStorageLocation
+	 * =Paths.get(getUploadDir()); // Normalize file name String fileName =
+	 * StringUtils.cleanPath(file.getOriginalFilename()); Path targetLocation =
+	 * fileStorageLocation.resolve(fileName); try {
+	 * Files.copy(file.getInputStream(),
+	 * targetLocation,StandardCopyOption.REPLACE_EXISTING); } catch (IOException e)
+	 * { throw new FileStorageException("Could not save file " + fileName +
+	 * ". Please try again!"+ e.getMessage());
+	 * 
+	 * } return file.getName(); }
+	 */
 
 	
 	@Override
@@ -87,7 +89,7 @@ public class FileStorageService implements FileStorageServI {
 
 	@Override
 	public void deleteAllUploads() {
-		Path fileStorageLocation =Paths.get(this.serviceProperties.getUploadDir());
+		Path fileStorageLocation =Paths.get(getUploadDir());
 		FileSystemUtils.deleteRecursively(fileStorageLocation.toFile());
 		
 	}
@@ -98,8 +100,8 @@ public class FileStorageService implements FileStorageServI {
 	public Set<Resource> getAllThatMatchRegex(String pattern, String patternSyntax, String directoryName){
 			    Set<Resource> fileList = new HashSet<>();
 				String directoryN= directoryName;
-			    if(null==directoryName || directoryName.isEmpty()) {
-			    	directoryN = serviceProperties.getDIRECTORY_PATH();
+			    if(directoryName== null || directoryName.length() <3) {
+			    	directoryN = getUploadDir();
 			    }
 				Path directory = Paths.get(directoryN).toAbsolutePath().normalize();
 							 
@@ -134,10 +136,18 @@ public class FileStorageService implements FileStorageServI {
 		        }
 		       return fileList;
 		}
-
+	
+	
+	public Set<String> getAllFileNamesThatMatchRegex(String pattern, String patternSyntax, String directoryName){
+		Set<String> mFiles = new HashSet<>();
+		 Set<Resource> filesInDirectory = getAllThatMatchRegex(pattern, patternSyntax, directoryName);
+		 filesInDirectory.forEach( e -> mFiles.add(e.getFilename()));
+		 return mFiles;
+	}
+	
 	@Override
 	public Resource getResourceInData(String filename) throws FileStorageException {
-		Path fileStorageLoc =Paths.get(this.serviceProperties.getDIRECTORY_PATH());
+		Path fileStorageLoc =Paths.get(getDIRECTORY_PATH());
 		 try {
 		      Path filePath = fileStorageLoc.resolve(filename).normalize();
 		      Resource resource = new UrlResource(filePath.toUri());

@@ -6,6 +6,7 @@ package com.aozora.fileserv.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.when;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.PatternSyntaxException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +34,7 @@ import com.aozora.fileserv.config.FileServiceProperties;
  */
 @ExtendWith(MockitoExtension.class)
 public class FileStorageServiceTest {
+	
 	@InjectMocks
 	private FileStorageService fileStorageService;
 	
@@ -41,6 +44,7 @@ public class FileStorageServiceTest {
 	private String fileName;
 	private String directoryPath;
 	private String dataDirectoryPath;
+	
 	/**
 	 * 
 	 */
@@ -58,11 +62,11 @@ public class FileStorageServiceTest {
 	@Test
 	void givenFileWhenGettingResourceInUploads_ThenCorrect() {
 		 when(serviceProperties.getUploadDir()).thenReturn(directoryPath);
-		 //Mockito.verify(serviceProperties, times(1)).getUploadDir();
 		 Resource resource = fileStorageService.getResourceInUploads(fileName);
 			assertTrue(resource.exists());
 			assertEquals(resource.getFilename(),fileName);
 			assertTrue(resource.isReadable());
+		 Mockito.verify(serviceProperties, times(1)).getUploadDir();
 		
 	}
 	
@@ -71,6 +75,7 @@ public class FileStorageServiceTest {
 		
 		when(serviceProperties.getDIRECTORY_PATH()).thenReturn(dataDirectoryPath);
 		Resource resource = fileStorageService.getResourceInData(fileName);
+		Mockito.verify(serviceProperties, times(1)).getDIRECTORY_PATH();
 		assertNotNull(resource);
 			assertTrue(resource.exists());
 			assertEquals(resource.getFilename(),fileName);
@@ -97,9 +102,31 @@ public class FileStorageServiceTest {
 		expectedFilenames.add("PathMatcher.txt");
 		expectedFilenames.add("50-contacts.csv" );
 		assertEquals(expectedFilenames.size(), actualFilenames.size());
-		assertTrue(actualFilenames.contains("words.txt"));
+		assertTrue(actualFilenames.contains("words.txt"));		
 		
+	}
+	
+	@Test
+	void givenPatternEmptyDirectoryPathWhenGettingAllThatMatchRegex_ThenIncorrect() {
+		String pattern ="^[a-zA-Z0-9._ -]+\\.(doc|pdf|csv|txt)$";
+		String patternSyntax = "regex";
 		
+		Exception exception= assertThrows(NullPointerException.class,()->{
+			Set<Resource> actualResources=fileStorageService.getAllThatMatchRegex(pattern, patternSyntax, "");
+		});
+		
+	}
+	
+	@Test
+	void givenWrongPatternWhenGettingAllThatMatchRegex_ThenIncorrect() {
+		String pattern ="*.txt";
+		String patternSyntax = "regex";
+		
+		Exception exception= assertThrows(PatternSyntaxException.class,()->{
+			 Set<Resource> actualResources = fileStorageService.getAllThatMatchRegex(pattern, patternSyntax, directoryPath);
+		});
+		
+	
 	}
 
 }

@@ -1,4 +1,10 @@
 # FileService Gradle Project with SpringBoot 2.7.0
+### Technologies used
+* Spring Boot 2.7.0
+* Java 17
+* JUnit5, Mockito
+* Gradle 
+* Log4j2
 
 ### RESTful File Service
 
@@ -43,22 +49,53 @@
 	
 * POST http://localhost:8082/fileservice/content/freqwords?n=10
 
-- Request body json: { "fileName": "words.txt" }
-- ResponseBody : [
-    "[branch] has the frequency 1",
-    "[coding, I] has the frequency 2",
-    "[house] has the frequency 7",
-    "[Christmas, gardening, garden] has the frequency 9",
-    "[home] has the frequency 14",
-    "[love] has the frequency 15"
-]
+- Request body json: 
+				{ "fileName": "AppPropsExamples.txt",
+  				"directory": "C://workspace_sts4-14//fileserv//bin//main//static//uploads"
+				}
+- ResponseBody : 
+		[
+		    {
+		        "the frequency: 37": "[#]"
+		    },
+		    {
+		        "the frequency: 20": "[spring]"
+		    },
+		    {
+		        "the frequency: 16": "[security]"
+		    },
+		    {
+		        "the frequency: 15": "[the, of]"
+		    },
+		    {
+		        "the frequency: 11": "[server, datasource]"
+		    },
+		    {
+		        "the frequency: 10": "[to]"
+		    },
+		    {
+		        "the frequency: 8": "[user]"
+		    },
+		    {
+		        "the frequency: 6": "[view]"
+		    }
+		]
 
 * POST http://localhost:8082/fileservice/content/longestwords
-- Request body json: { "fileName": "PathMatcher.txt" }
+- Request body json: { "fileName": "PathMatcher.txt",
+					   "directory": "C://workspace_sts4-14//fileserv//bin//main//static//uploads }
 - ResponseBody : 
 [
-    "the current line number is 1. The 2 longest words are: [PathMatcher, implementation]",
-    "the current line number is 4. The 2 longest words are: [PathMatcher, interface]"
+    {
+        "the current line number: 1": "[PathMatcher, implementation]",
+        "length 11": "PathMatcher",
+        "length 14": "implementation"
+    },
+    {
+        "the current line number: 4": "[PathMatcher, interface]",
+        "length 11": "PathMatcher",
+        "length 9": "interface"
+    }
 ]
 Content-Type: application/json
 Accept: application/json

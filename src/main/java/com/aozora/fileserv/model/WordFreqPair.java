@@ -21,8 +21,7 @@ public class WordFreqPair {
 
     @Override
     public String toString() {
-        return "WordFreqPair{" +
-                "word='" + word + '\'' +
+        return "WordFreqPair{" + word + 
                 ", frequency=" + frequency +
                 '}';
     }

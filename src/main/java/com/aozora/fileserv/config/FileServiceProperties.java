@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
-@ConfigurationProperties(prefix="fileservice")
+@ConfigurationProperties(prefix="fileservice.static")
 @Configuration
 @Primary
 public class FileServiceProperties {

@@ -44,30 +44,31 @@ public class FileUtils {
     public static List<String> getLinesInFile(String fileName, String directoryPath) throws IOException, NoSuchFileException {
     	logger.debug("entering "+FileUtils.class.getName()+"the method: getLinesInFile ");
     	
-    	Path fPath=null;
-    	
+    	//Path fPath=null;
+    	List<String> lines = new ArrayList<>();
     	try {    		
-    		fPath = Paths.get(directoryPath).resolve(fileName);
-    		
+    		Path fPath = Paths.get(directoryPath).resolve(fileName);
     		logger.debug("fPath:" +fPath);
+    		
+        	File file = fPath.toFile();
+        	if(file.exists() && file.canRead()) {
+    			
+        		BufferedReader bufferedReader = Files.newBufferedReader(fPath);
+        		
+                String curLine;
+                while ((curLine = bufferedReader.readLine()) != null){
+                    lines.add(curLine);
+                }
+                bufferedReader.close();
+        	}else {
+        		throw new NoSuchFileException("this is not an existing file or it is not readable");
+        	}
     	}catch(NullPointerException e) {
     		e.printStackTrace();
     		throw new NoSuchFileException(e.getMessage());
     	}
-    	List<String> lines = new ArrayList<>();
-    	File file = fPath.toFile();
-    	if(file.exists() && file.canRead()) {
-			
-    		BufferedReader bufferedReader = Files.newBufferedReader(fPath);
-    		
-            String curLine;
-            while ((curLine = bufferedReader.readLine()) != null){
-                lines.add(curLine);
-            }
-            bufferedReader.close();
-    	}else {
-    		throw new NoSuchFileException("this is not an existing file or it is not readable");
-    	}
+    	
+    	
     	logger.debug("exiting "+FileUtils.class.getName()+"the method: getLinesInFile() ");
     	
         return lines;

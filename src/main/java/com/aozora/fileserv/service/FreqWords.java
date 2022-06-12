@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeMap;
@@ -68,9 +70,9 @@ public class FreqWords {
 	        
 	 }
 	 
-	 static Map<Integer,Set<String>> getWordSetByFrequency(String filename, String directoryPath) throws IOException, URISyntaxException{
-		 //ClassPathResource fileResource = new ClassPathResource(filename);
-	        TreeMap<Integer, Set<String>> wordFreqResult = new TreeMap<Integer, Set<String>>();
+	 static TreeMap<Integer,Set<String>> getWordSetByFrequency(String filename, String directoryPath) throws IOException, URISyntaxException{
+		
+	        TreeMap<Integer, Set<String>> wordFreqResult = new TreeMap<Integer, Set<String>>(Collections.reverseOrder());
 	        
 	        Map<String, Integer> freqResult = getFrequencies(filename, directoryPath);
 	        
@@ -82,13 +84,22 @@ public class FreqWords {
 	            if (wordList == null || wordList.size() == 0) {
 	                wordList = new HashSet<>();
 	            }
-	            wordList.add(each);
-	            wordFreqResult.put(freq, wordList);
+	            if(!each.isEmpty()) {
+	            	wordList.add(each.trim());
+	            }
+	           if(wordList.size() > 0) {
+	        	   wordFreqResult.put(freq, wordList);
+	           }
+	            
 	        }
+	        wordFreqResult.entrySet().forEach(w->System.out.println(""+w.getKey()+""+w.getValue()));
 	        return wordFreqResult;
 	 }
 
-	 /*
+	  /*
+	   * @param filename - file name
+	   * @param directoryPath - path of the directory were the file given is located
+	   * 
 	   * For a given input text file return for each line of the file the longest 2 words.
 	   * In case there are more than 2 words with the same length on a line, filter on
 	   * the most frequent 2 words from the whole document, these shall be returned.
@@ -136,11 +147,12 @@ public class FreqWords {
 	    }
 	    
 	  // get a map of the word length and the corresponding words of the same length in a set
-	  private static TreeMap<Integer, TreeSet<String>> getLongestWordsInLine(Map<String, Integer> freqResult){
+	  static TreeMap<Integer, TreeSet<String>> getLongestWordsInLine(Map<String, Integer> freqLineResult){
 	        TreeMap<Integer, TreeSet<String>> lengthWordList = new TreeMap<>();
-
+	        
+	        //map of string, length
 	        TreeMap<String, Integer> wordsMap = new TreeMap<>();
-	        freqResult.keySet().forEach( entry-> wordsMap.put( entry, entry.length()));
+	        freqLineResult.keySet().forEach( entry-> wordsMap.put( entry, entry.length()));
 	        for( String each: wordsMap.keySet()){
 	            TreeSet<String> sameLengthWords= null;
 	            Integer sameLength = wordsMap.get(each);
@@ -156,41 +168,94 @@ public class FreqWords {
 	    }
 
 	    /*
-	     * returns the first n entries in a TreeMap of frequency and set of strings
-	     * @input n -number of frequency entries in the returned map
+	     * @param n - number of frequency entries in the returned map
+	     * @param filename - file name
+	     * @param directoryPath - path of the directory were the file given is located
+	     * 
+	     * @return the most frequent n words, the first n entries in a TreeMap of <integer frequency, set of strings>
+	     * in reverse order, which is the reverse of the natural ordering of the objects
+	     *	    
 	     */
-	  static TreeMap<Integer, Set<String>> getFirstNFreq(int n, String filename, String directoryPath){
+	  static TreeMap<Integer, Set<WordFreqPair>> getFirstNFreq(int n, String filename, String directoryPath){
 		  Map<Integer, Set<String>> freqMap = null;
-		  TreeMap<Integer, Set<String>> result = new TreeMap<>();
+		  TreeMap<Integer, Set<WordFreqPair>> result = new TreeMap<>(Collections.reverseOrder());
 		try {
 			freqMap = getWordSetByFrequency(filename, directoryPath);
 			
-	        for( int i= 0; i < n; i++){
-	            freqMap.entrySet()
-	                    .forEach( entry-> result.put(entry.getKey(), entry.getValue()));
-	        }
+			
+
+			int counter=0;
+			for(Entry<Integer, Set<String>> each: freqMap.entrySet() ) {
+				Set<WordFreqPair> wordFreqPairs= new HashSet();
+				Set<String> currentWordSet = each.getValue();
+				Integer currentFrequency =  each.getKey();
+				
+				for( String word: currentWordSet ) {
+					wordFreqPairs.add(new WordFreqPair(word,currentFrequency));					
+					counter++;
+					if(counter == n) {
+						break;
+					}
+				}
+				result.put(currentFrequency, wordFreqPairs);
+				if(counter == n) {
+					break;
+				}
+							
+			}	
+			
+		
+			 
 		} catch (IOException e) {			
 			e.printStackTrace();
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
 	        
-	       //the frequencies in natural order
+	       //the frequencies in reverse natural order			
 	        return result;
 
 	   }
 	    
-	  // if there are  more than 2 words of the same length on a line
-	  //filter by frequency of the string
-	  private static Set<String> handleMoreThan2StringsSameLength(TreeMap<Integer, TreeSet<String>> longestWordsMap,
-			  Map<String, Integer> freqResult){
-	        Set<String> result= new HashSet<>();
+	  /**
+	   *  if there are  more than 2 words of the same length on a line
+	   *  filter by frequency of the string
+	   * @param longestWordsMap for a given line
+	   * @param freqResult for the whole file
+	   * 
+	   * @return longest 2 words or if there are  more than 2 words of the same length on a line
+	   *  2 words filtered by string frequency in the whole file
+	   */	  
+	  static Set<String> handleMoreThan2StringsSameLength(TreeMap<Integer, TreeSet<String>> longestWordsMap,
+			 Map<String, Integer> freqResult){
+		   Set<String> result= new HashSet<>();
+		   List<WordFreqPair> lineWords = new ArrayList<>();
 	       
-	        List<WordFreqPair> lineWords = new ArrayList<>();
+		    
 	        NavigableSet<Integer> descendingKeySet =  longestWordsMap.descendingKeySet();	 
 	        int keySetSize = descendingKeySet.size();
-	        if(keySetSize > 0) {
-	        	Integer[] descendingKeyArray= new Integer[keySetSize];
+	      //the given longestWordMap size should be greater than 0 as the line should not be empty
+	        if(keySetSize == 0) {
+	        	throw new IllegalArgumentException("the given map should not be empty");
+	        }
+	       
+	        Integer[] descendingKeyArray= new Integer[keySetSize];
+	        if( keySetSize == 1) {
+            	logger.debug("all words have the same length");
+            	TreeSet<String> wordSet= longestWordsMap.get( descendingKeySet.first());
+            	   int c=0;
+            	   for(String each:  wordSet) {
+            		   	result.add(each);
+            	    	c++;
+            	    	if(c == 2) {
+            	    		break;
+            	    	}
+            	    };
+            	  
+            	return result;
+            }
+	        if(keySetSize > 1) {
+	        	        	
 		        int index=0;
 		        for(Integer each : descendingKeySet) {
 		        	descendingKeyArray[index]=each;
@@ -201,13 +266,7 @@ public class FreqWords {
 	           Integer secondGreatestLength= descendingKeyArray[1];
 	           System.out.println(" greatestLength: "+greatestLength +" secondGreatestLength: "+secondGreatestLength);
 	           logger.debug("greatestLength: "+greatestLength +" secondGreatestLength: "+secondGreatestLength);
-	           if( keySetSize==1) {
-	            	logger.debug("all words have the same length");
-	            	TreeSet<String> wordSet= longestWordsMap.get(greatestLength);
-	            	    result.addAll(wordSet);
-	            	   //to do -only 2 words should return
-	            	return result;
-	            }
+	           
 	           Set<String> wList = longestWordsMap.get(greatestLength);
 	     	    int wordsOfSameLengthNb= (wList != null)?  wList.size() : 0;
 	   	        logger.debug(" wordsOfSameLengthNb: "+ wordsOfSameLengthNb);
@@ -244,8 +303,7 @@ public class FreqWords {
 
 		        }
 	           
-	        }          	  
-                   
+	        }        	        
 	      
 	       
 	        return result;

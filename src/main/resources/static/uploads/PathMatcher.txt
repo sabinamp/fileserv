@@ -1,5 +1,21 @@
 Each file system implementation provides a PathMatcher interface implementation:
 
 
-public interface PathMatcher 
+How to use PathMatcher injava.nio.file
+Best Java code snippets using java.nio.file.PathMatcher
         
+        
+@Signature
+public static boolean match(String path, String pattern) {
+  	PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher(pattern);
+  	return pathMatcher.matches(Paths.get(path));
+}
+
+How do I find a file or directory with specific name inside a directory and its subdirectories in Java?
+
+PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:data");
+  if (matcher.matches(dir.getFileName())) {
+    System.out.println("dir found " + dir);
+  if (matcher.matches(file.getFileName())) {
+    System.out.println("file found " + file);
+  Files.walkFileTree(Paths.get("full/path/to/your/search"), new MyVisitor());
