@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,26 +63,24 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  *
  */
 
-
- 
 @WebMvcTest(FileStorageController.class)
 public class FileStorageControllerTest {
-	 private String fileName;
-	 private String dataDirectoryPath;
-	 private Set<String> expectedFilenames;
-	 private Set<Resource> expectedResources;
-	 
+	 private static String fileName;
+	 private static String dataDirectoryPath;
+	 private static Set<String> expectedFilenames;
+	 private static Set<Resource> expectedResources;
+		
 	 @Autowired
 	 private MockMvc mockMvc;
 	 
-	 private String pattern;
-	 private String patternSyntax;	
+	 private static String pattern;
+	 private static String patternSyntax;	
 	 
 	 @MockBean
-	 private FileStorageService fileStorageService;
+	 private static FileStorageService fileStorageService;
 	 
-	 @BeforeEach
-	 private void setUpTestData() {
+	 @BeforeAll
+	 private static void setUpTestData() {
 		    pattern ="^[a-zA-Z0-9._ -]+\\.(doc|pdf|csv|txt)$";
 		    patternSyntax = "regex";
 		
@@ -117,21 +116,19 @@ public class FileStorageControllerTest {
 				expectedResources.add(addressListResource);
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
-			}
-		      
-		
+			}  
+		    
 		 
 	 }
 	 
 	 
 	 @Test
 	 void givenPatternWhenGetAllFilesThatMatchRegex_then200() throws Exception {
-		 when(fileStorageService.getAllThatMatchRegex(pattern, patternSyntax, dataDirectoryPath))
-		 	.thenReturn(expectedResources);
+		 when(fileStorageService.getAllThatMatchRegex(pattern, patternSyntax,
+				  dataDirectoryPath)) .thenReturn(expectedResources);
+				 
 		 when(fileStorageService.getAllFileNamesThatMatchRegex(pattern, patternSyntax, dataDirectoryPath))
-		 	.thenReturn(expectedFilenames);
-		
-		 		
+			 	.thenReturn(expectedFilenames);
 		//String jsonPatternAndDirectory= "{\"pattern\": \"^[a-zA-Z0-9._ -]+\\.(doc|pdf|csv|txt)$\",\"directory\": \"C:/workspace_sts4-14/fileserv/bin/main/static/data\"}";
 		MultiValueMap<String, String> reqParams = new LinkedMultiValueMap<>();
 		reqParams.add("syntax", "regex");
@@ -140,20 +137,18 @@ public class FileStorageControllerTest {
 		ObjectNode patternAndDirectoryJsonNode = mapper.createObjectNode();
 		patternAndDirectoryJsonNode.put("pattern", "^[a-zA-Z0-9._ -]+\\.(doc|pdf|csv|txt)$");
 		patternAndDirectoryJsonNode.put("directory", dataDirectoryPath);
-		MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/fileservice/files/matchedfiles")
-					.content(patternAndDirectoryJsonNode.toString())			
+		MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/files/matchedfiles")							
 					.contentType(MediaType.APPLICATION_JSON)
-					 .params(reqParams)
+					 .params(reqParams).content(patternAndDirectoryJsonNode.toString())	
 				    .accept(MediaType.APPLICATION_JSON))
 				    .andExpect(status().isOk())	
 				    .andExpect(jsonPath("$.size()").value(expectedFilenames.size()))
-				    .andExpect(jsonPath("$[*]", hasItem("words.txt")))
-				    .andExpect(content().string(contains("words.txt")))
+				    .andExpect(jsonPath("$[*]", hasItem("words.txt")))				    
 				    .andReturn();
 			 		
 		 verify(fileStorageService, times(1)).getAllFileNamesThatMatchRegex(pattern, patternSyntax, dataDirectoryPath);
-		 assertNull(result.getResponse().getContentAsString());
-		 assertTrue(result.getResponse().getContentType()==MediaType.APPLICATION_JSON_VALUE);
+		 assertNotNull(result.getResponse().getContentAsString());
+		 assertTrue(result.getResponse().getErrorMessage()==null);
 		
 			 
 	 }
@@ -162,16 +157,17 @@ public class FileStorageControllerTest {
 	 void givenNoPatternWhenGetAllFilesThatMatchRegex_then400() throws Exception {
 		 MultiValueMap<String, String> reqParams = new LinkedMultiValueMap<>();
 			reqParams.add("syntax", "regex");
-		 when(fileStorageService.getAllFileNamesThatMatchRegex(pattern, patternSyntax, dataDirectoryPath))
-		 	.thenReturn(expectedFilenames);		
-		 		
+			 when(fileStorageService.getAllThatMatchRegex(pattern, patternSyntax,
+					  dataDirectoryPath)) .thenReturn(expectedResources);
+					 
+			 when(fileStorageService.getAllFileNamesThatMatchRegex(pattern, patternSyntax, dataDirectoryPath))
+				 	.thenReturn(expectedFilenames);
 				
-		mockMvc.perform(MockMvcRequestBuilders.post("/fileservice/files/matchedfiles")	
-				.content("{}").contentType(MediaType.APPLICATION_JSON)
-				.params(reqParams)
+		mockMvc.perform(MockMvcRequestBuilders.post("/files/matchedfiles")	
+				.contentType(MediaType.APPLICATION_JSON)
+				.params(reqParams).content("{}")
 				.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isBadRequest());
-			 		
+				.andExpect(status().isBadRequest());			 		
 		 
 	 }
 	 @Test
@@ -182,11 +178,11 @@ public class FileStorageControllerTest {
 		 	.thenReturn(Collections.EMPTY_SET);		
 		 		
 				
-		mockMvc.perform(MockMvcRequestBuilders.post("/fileservice/files/matchedfiles")	
-				.content("{}").contentType(MediaType.APPLICATION_JSON)
-				.params(reqParams)
+		mockMvc.perform(MockMvcRequestBuilders.post("/files/matchedfiles")	
+				.contentType(MediaType.APPLICATION_JSON)
+				.param("syntax", "regex").content("{}")
 				.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isNoContent());
+				.andExpect(status().isBadRequest());
 			 		
 		 
 	 }
@@ -200,9 +196,10 @@ public class FileStorageControllerTest {
 		 * when(this.fileStorageService.save(multipartFile)).thenReturn("test.txt"); }
 		 */
 	 
-	 @Test
-	  void givenGlobPatternAndGlobSyntax_ThenCorrect() {
-		 
-	 }
+		/*
+		 * @Test void givenGlobPatternAndGlobSyntax_ThenCorrect() {
+		 * 
+		 * }
+		 */
 
 }

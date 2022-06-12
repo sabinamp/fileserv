@@ -110,29 +110,38 @@ public class FileContentController {
 		ResponseEntity<String> response = null;
 		try {
 			jsonFileNode = objectMapper.readTree(jsonFileNameAndDir);
-			String fileName = jsonFileNode.get("fileName").asText();			
-			String directoryPath = jsonFileNode.get("directory").asText();
-			
-			words = fileContentService.getFirstNFreqWords(fileName,directoryPath, n);
-			
-			if(!words.isEmpty()) {
-				MultiValueMap<String,String> headers= new HttpHeaders();
-				headers.set("eTag", Long.valueOf(fileName.length()+directoryPath.length())+"111");
-				ObjectMapper objectMapper2 = new ObjectMapper();		
-				
-				ArrayNode frequenciesWArrayNode=objectMapper2.createArrayNode();
-				words.entrySet().forEach(each-> {
-					ObjectNode eachNode = objectMapper2.createObjectNode() ;
-					Set<WordFreqPair> pairs= each.getValue();
-					Set<String> sameFreqWords= new HashSet<>();
-					pairs.forEach(p-> sameFreqWords.add(p.getWord()));
-					eachNode.put("the frequency: "+each.getKey(), ""+sameFreqWords);
-					frequenciesWArrayNode.add(eachNode);
-				});
-				String frequenciesWJSON = objectMapper2.writerWithDefaultPrettyPrinter().writeValueAsString(frequenciesWArrayNode);
-				response = new ResponseEntity<String>(frequenciesWJSON, headers,HttpStatus.OK);
-								
+			if(jsonFileNode ==null) {
+				 return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
 			}
+			JsonNode directoryNode =  jsonFileNode.get("directory");			
+			JsonNode fileNode = jsonFileNode.get("fileName");
+			 if(fileNode != null && directoryNode != null) {
+				    String fileName = fileNode.asText();			
+					String directoryPath = jsonFileNode.get("directory").asText();
+					words = fileContentService.getFirstNFreqWords(fileName,directoryPath, n);
+					if(!words.isEmpty()) {
+						MultiValueMap<String,String> headers= new HttpHeaders();
+						headers.set("eTag", Long.valueOf(fileName.length()+directoryPath.length())+"111");
+						ObjectMapper objectMapper2 = new ObjectMapper();		
+						
+						ArrayNode frequenciesWArrayNode=objectMapper2.createArrayNode();
+						words.entrySet().forEach(each-> {
+							ObjectNode eachNode = objectMapper2.createObjectNode() ;
+							Set<WordFreqPair> pairs= each.getValue();
+							Set<String> sameFreqWords= new HashSet<>();
+							pairs.forEach(p-> sameFreqWords.add(p.getWord()));
+							eachNode.put("the frequency: "+each.getKey(), ""+sameFreqWords);
+							frequenciesWArrayNode.add(eachNode);
+						});
+						String frequenciesWJSON = objectMapper2.writerWithDefaultPrettyPrinter().writeValueAsString(frequenciesWArrayNode);
+						response = new ResponseEntity<String>(frequenciesWJSON, headers,HttpStatus.OK);
+										
+					}
+			 }else {
+				 response = ResponseEntity.badRequest().body("Bad request. Incorrect JSON");
+			 }
+			
+
 		} catch (JsonMappingException e) {			
 			e.printStackTrace();
 			 logger.debug(" JsonProcessingException caught"+e.getMessage());

@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.test.context.TestPropertySource;
 
 @EnableConfigurationProperties(value = FileServiceProperties.class)
-@TestPropertySource("classpath:server-config-test.properties")
+@TestPropertySource("classpath:application.properties")
 public class FileServicePropertiesTest {
 
 	@Autowired

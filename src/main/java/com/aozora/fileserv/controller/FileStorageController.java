@@ -64,22 +64,31 @@ public class FileStorageController {
 		JsonNode jsonNode = null;
 		try {
 			jsonNode = objectMapper.readTree(jsonPatternAndDirectory);
-			 String directory= jsonNode.get("directory").asText();			
-			 String pattern = jsonNode.get("pattern").asText();
-			 
-			 filesInDirectory = fileStorageService.getAllFileNamesThatMatchRegex(pattern, syntax, directory);
-			 
-			 if( filesInDirectory == null || filesInDirectory.size() == 0) {			
-				return new ResponseEntity<Set<String>>(filesInDirectory, HttpStatus.NOT_FOUND);			
-			}else {
-				   return new ResponseEntity<Set<String>>(filesInDirectory, HttpStatus.OK);
+			if(jsonNode==null) {
+				 return new ResponseEntity<Set<String>>(HttpStatus.BAD_REQUEST);
 			}
+			 JsonNode directoryNode =  jsonNode.get("directory");			
+			 JsonNode patternNode = jsonNode.get("pattern");
+			 if(patternNode != null && directoryNode != null) {
+				 String pattern = patternNode.asText();
+				 String directory=directoryNode.asText();	
+				 filesInDirectory = fileStorageService.getAllFileNamesThatMatchRegex(pattern, syntax, directory);
+					 
+				 if( filesInDirectory == null || filesInDirectory.size() == 0) {			
+					return new ResponseEntity<Set<String>>(HttpStatus.NOT_FOUND);			
+				}else {
+					   return new ResponseEntity<Set<String>>(filesInDirectory, HttpStatus.OK);
+				}				 
+			 }else {
+				 return new ResponseEntity<Set<String>>(HttpStatus.BAD_REQUEST);
+			 }			 
+			
 		} catch (JsonMappingException e1) {		
 			e1.printStackTrace();
-			return new ResponseEntity<Set<String>>(filesInDirectory, HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<Set<String>>(HttpStatus.BAD_REQUEST);
 		} catch (JsonProcessingException e1) {			
 			e1.printStackTrace();
-			return new ResponseEntity<Set<String>>(filesInDirectory, HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<Set<String>>(HttpStatus.BAD_REQUEST);
 		}		 
 		
 	}
