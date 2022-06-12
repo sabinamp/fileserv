@@ -20,82 +20,46 @@
 
 * getting list of Files’ information (file names)
 
-### REST API
-* POST /fileservice/files/matchedfiles?syntax=regex
- -the pattern and directory in request body as JSON: 
-	 {
-		"pattern": "^[a-zA-Z0-9._ -]+\\.(doc|pdf|csv|txt)$",
-		"directory": "C:/workspace_sts4-14/fileserv/bin/main/static/data"
-	}
+### REST API<hr />
+<ul>
+	<li>
+	<p> POST /fileservice/files/matchedfiles?syntax=regex</p>
+    <p>-the pattern and directory in request body as JSON: 
+	<pre><code> { "pattern": "^[a-zA-Z0-9._ -]+\\.(doc|pdf|csv|txt)$", "directory": "C:/workspace_sts4-14/fileserv/bin/main/static/data"}</code></pre>
+	</p>
+	</li>
 	
-	
-* POST http://localhost:8082/fileservice/files/matchedfiles?syntax=regex
-	 -the pattern and directory in request body as JSON: 
-	 {
-		"pattern": "^[a-zA-Z0-9._ -]+\\.(doc|pdf|csv|txt)$",
-		"directory": "C:/workspace_sts4-14/fileserv/bin/main/static/uploads"
-	 }
-	Content-Type: text/plain
+   <li> 
+   <p> POST http://localhost:8082/fileservice/files/matchedfiles?syntax=regex </p>
+	<p> -the pattern and directory in request body as JSON: <br/>
+	<pre><code> {"pattern": "^[a-zA-Z0-9._ -]+\\.(doc|pdf|csv|txt)$", "directory": "C:/workspace_sts4-14/fileserv/bin/main/static/uploads" }
+	 </code></pre>
+	 Content-Type: application/json <br/>
+	 Accept: application/json <br/>
+	- Response body: <br/>
+	<pre><code>["StoreAddressList.pdf", "words.txt", "8-Reasons-AStartupOverACorporateJob.pdf", "PathMatcher.txt", "50-contacts.csv"] </code></pre>
+	</p>
+	</li>
+	<li>
+	<p> POST http://localhost:8082/fileservice/content/freqwords?n=10 </p>
+	<p>
+	- Request body json: 
+				<pre><code>{"fileName": "AppPropsExamples.txt", "directory": "C://workspace_sts4-14//fileserv//bin//main//static//uploads"}</code></pre>
+				<br/>
+	- ResponseBody : 
+		<pre><code>[{ "the frequency: 37": "[#]"}, {"the frequency: 20": "[spring]"}, {"the frequency: 16": "[security]"}, {"the frequency: 15": "[the, of]"}, {"the frequency: 11": "[server, datasource]"}, {"the frequency: 10": "[to]"}, {"the frequency: 8": "[user]"}, {"the frequency: 6": "[view]"}]
+		</code></pre>
+		</p>
+	</li>
+</li> 
+	<p> POST http://localhost:8082/fileservice/content/longestwords </p>
+	<p>- Request body json: 
+	<pre><code>{ "fileName": "PathMatcher.txt", "directory": "C://workspace_sts4-14//fileserv//bin//main//static//uploads } </code></pre>
+	- ResponseBody : 
+	<pre><code>[ {"the current line number: 1": "[PathMatcher, implementation]", "length 11": "PathMatcher", "length 14": "implementation"}, 
+	    {"the current line number: 4": "[PathMatcher, interface]", "length 11": "PathMatcher", "length 9": "interface" } ]</code></pre>
+	Content-Type: application/json
 	Accept: application/json
-	- Response body: 
-	[
-	    "StoreAddressList.pdf",
-	    "words.txt",
-	    "8-Reasons-AStartupOverACorporateJob.pdf",
-	    "PathMatcher.txt",
-	    "50-contacts.csv"
-	]
-	
-	
-* POST http://localhost:8082/fileservice/content/freqwords?n=10
-
-- Request body json: 
-				{ "fileName": "AppPropsExamples.txt",
-  				"directory": "C://workspace_sts4-14//fileserv//bin//main//static//uploads"
-				}
-- ResponseBody : 
-		[
-		    {
-		        "the frequency: 37": "[#]"
-		    },
-		    {
-		        "the frequency: 20": "[spring]"
-		    },
-		    {
-		        "the frequency: 16": "[security]"
-		    },
-		    {
-		        "the frequency: 15": "[the, of]"
-		    },
-		    {
-		        "the frequency: 11": "[server, datasource]"
-		    },
-		    {
-		        "the frequency: 10": "[to]"
-		    },
-		    {
-		        "the frequency: 8": "[user]"
-		    },
-		    {
-		        "the frequency: 6": "[view]"
-		    }
-		]
-
-* POST http://localhost:8082/fileservice/content/longestwords
-- Request body json: { "fileName": "PathMatcher.txt",
-					   "directory": "C://workspace_sts4-14//fileserv//bin//main//static//uploads }
-- ResponseBody : 
-[
-    {
-        "the current line number: 1": "[PathMatcher, implementation]",
-        "length 11": "PathMatcher",
-        "length 14": "implementation"
-    },
-    {
-        "the current line number: 4": "[PathMatcher, interface]",
-        "length 11": "PathMatcher",
-        "length 9": "interface"
-    }
-]
-Content-Type: application/json
-Accept: application/json
+	</p>
+</li>
+</ul>
