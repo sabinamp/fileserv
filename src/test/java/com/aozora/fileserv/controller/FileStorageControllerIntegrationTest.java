@@ -60,8 +60,10 @@ public class FileStorageControllerIntegrationTest {
 		
 		  @TestConfiguration static class FileStorageServiceTestContextConfiguration {
 		  
-		  @Bean public FileStorageService employeeService() { return new
-		  FileStorageService(); } }
+		  @Bean public FileStorageService employeeService() { 
+			  return new FileStorageService(); 
+			 }
+		  }
 		 
 	 
 	 //To check the Service class, we need to have an instance of the Service class created
