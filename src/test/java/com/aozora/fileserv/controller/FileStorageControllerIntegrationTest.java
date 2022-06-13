@@ -56,14 +56,7 @@ public class FileStorageControllerIntegrationTest {
 	 private static String pattern ;	    
 	 private static String patternSyntax;
 	 private static String dataDirectoryPath;
-		/*
-		 * private static final String LOCAL_HOST = "http://localhost:"; 
-	 	 * @LocalServerPort
-	 	 * private int randomServerPort;
-		 * private static RestTemplate template = new RestTemplate(); 
-		 * private static MockRestServiceServer mockServer;
-		 */
-	 
+	
 		
 		  @TestConfiguration static class FileStorageServiceTestContextConfiguration {
 		  
@@ -81,7 +74,7 @@ public class FileStorageControllerIntegrationTest {
 	 
 	 @BeforeAll
 	 public static void init() {
-	        //mockServer = MockRestServiceServer.createServer(template);
+	        
 	        pattern ="^[a-zA-Z0-9._ -]+\\.(doc|pdf|csv|txt)$";
 		    patternSyntax = "regex";
 		    dataDirectoryPath = "C:/workspace_sts4-14/fileserv/bin/main/static/data/";		
