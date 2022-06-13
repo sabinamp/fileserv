@@ -126,7 +126,7 @@ public class FileContentController {
 	}
 	
 	
-	@PostMapping( value = "/longestwords", consumes={MediaType.ALL_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
+	@PostMapping( value = "/longestwords", consumes={MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public ResponseEntity<String> getLongestFreqWords(@RequestBody String jsonFileNameAndDir) {
 		ObjectMapper objectMapper = new ObjectMapper();		
 		JsonNode jsonFileNode = null;

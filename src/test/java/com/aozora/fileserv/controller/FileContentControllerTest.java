@@ -53,7 +53,6 @@ public class FileContentControllerTest {
 	 private static String fileName;
 	 private static String directoryPath;
 	 
-	 private Map<Integer, Set<String>> longestWordsPerLine = new TreeMap<Integer,Set<String>>();
 	
 	 private static TreeMap<Integer, Set<WordFreqPair>> expectedFreq;
 
@@ -170,5 +169,44 @@ public class FileContentControllerTest {
 		
 		 verify(fileContentService, times(0)).getFirstNFreqWords(fileName, directoryPath, 0);
 		 assertNotNull(result.getResponse());
+	}
+	
+	@Test
+	void givenFileAndDirectory_whenGetLongestWordsPerLine_thenOK() throws Exception {
+		/*
+		 * greatestLength: 14 secondGreatestLength: 11
+		 * current line number: 1. Added the words: [PathMatcher, implementation] 
+		 * greatestLength: 11 secondGreatestLength: 9 
+		 * current line number: 4. Added the words: [PathMatcher, interface] current
+		 * line number: 5- empty line
+		 */
+		Map<Integer, Set<String>> longestWordsPerLine = new TreeMap<Integer,Set<String>>();
+		Set<String> longestW1= new HashSet<>();
+		longestW1.add("PathMatcher");
+		longestW1.add("implementation");
+		longestWordsPerLine.put(1, longestW1);
+		//line 2 and 3 are empty lines
+		Set<String> longestW2= new HashSet<>();
+		longestW2.add("PathMatcher");
+		longestW2.add("interface");
+		longestWordsPerLine.put(4, longestW2);
+		
+		when(fileContentService.getLongestWords("PathMatcher.txt", directoryPath)).thenReturn(longestWordsPerLine);
+		
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode filenameAndDirectoryJsonNode = mapper.createObjectNode();
+		filenameAndDirectoryJsonNode.put("fileName", "PathMatcher.txt");
+		filenameAndDirectoryJsonNode.put("directory", directoryPath);
+		
+		MvcResult result2 = mockMvc.perform(MockMvcRequestBuilders.post("/content/longestwords")							
+				.contentType(MediaType.APPLICATION_JSON_VALUE)
+				.content(filenameAndDirectoryJsonNode.toPrettyString())	
+			    .accept(MediaType.APPLICATION_JSON_VALUE))
+			    .andExpect(status().isOk())
+			   // .andExpect(jsonPath("$[*]"), contains("PathMatcher"))	
+			    .andReturn();
+		
+		 verify(fileContentService, times(1)).getLongestWords("PathMatcher.txt", directoryPath);
+		 assertNotNull(result2.getResponse());
 	}
 }

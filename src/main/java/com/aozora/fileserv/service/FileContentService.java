@@ -20,7 +20,7 @@ public class FileContentService implements FileContentServI {
 
 	@Override
 	public TreeMap<Integer, Set<WordFreqPair>> getFirstNFreqWords(String filename, String directoryPath, int n) throws NoSuchFileException {
-		if(filename == null || filename.length() <1 || directoryPath == null || directoryPath.length() < 1) {
+		if(filename == null || filename.length() <4 || directoryPath == null || directoryPath.length() < 5) {
 			throw new NoSuchFileException("the filename or directoryPath is null");
 		}	
 		 TreeMap<Integer, Set<WordFreqPair>> result = FreqWords.getFirstNFreq(n, filename,directoryPath);
@@ -30,7 +30,7 @@ public class FileContentService implements FileContentServI {
 	@Override
 	public Map<Integer, Set<String>> getLongestWords(String filename, String directoryPath) throws NoSuchFileException {
 		Map<Integer, Set<String>> result = null;
-		if(filename == null ||filename.length() <5 || directoryPath == null || directoryPath.length() < 8) {
+		if(filename == null ||filename.length() <4 || directoryPath == null || directoryPath.length() < 6) {
 			throw new NoSuchFileException("the filename or directoryPath is null");
 		}
 		try {
