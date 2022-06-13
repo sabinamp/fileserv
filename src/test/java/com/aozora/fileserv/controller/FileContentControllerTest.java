@@ -4,7 +4,10 @@
 package com.aozora.fileserv.controller;
 
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,7 +21,6 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -32,8 +34,6 @@ import org.springframework.util.MultiValueMap;
 
 import com.aozora.fileserv.model.WordFreqPair;
 import com.aozora.fileserv.service.FileContentServI;
-import com.aozora.fileserv.service.FileContentService;
-import com.aozora.fileserv.service.FileStorageServI;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -43,23 +43,22 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 @WebMvcTest(FileContentController.class)
 public class FileContentControllerTest {
+	
 	 @Autowired
 	 private MockMvc mockMvc;
 	 
 	 @MockBean
-	 private FileContentServI fileContentService;
-	 @MockBean
-	 private FileStorageServI fileStorageService;
-	 
-	 private String fileName;
-	 private String directoryPath;
+	 private static FileContentServI fileContentService;
+	 	 
+	 private static String fileName;
+	 private static String directoryPath;
 	 
 	 private Map<Integer, Set<String>> longestWordsPerLine = new TreeMap<Integer,Set<String>>();
 	
-	 private TreeMap<Integer, Set<WordFreqPair>> expectedFreq;
+	 private static TreeMap<Integer, Set<WordFreqPair>> expectedFreq;
 
-	 @BeforeEach
-	 private  void setUpTestData() {
+	 @BeforeAll
+	 private static void setUpTestData() {
 		 fileName= "words.txt";
 		 directoryPath="C:/workspace_sts4-14/fileserv/bin/main/static/uploads/";
 		 
@@ -102,28 +101,74 @@ public class FileContentControllerTest {
 	 }
 
 	@Test
-	void givenFileNameDirectoryPath_testGetFirstNFreqWords() throws Exception {
-		
+	void givenFileNameDirectoryPath_WhenGetFirstNFreqWords_thenOK() throws Exception {
 		
 		when(fileContentService.getFirstNFreqWords(fileName, directoryPath, 10)).thenReturn(expectedFreq);
 		
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode filenameAndDirectoryJsonNode = mapper.createObjectNode();
-		filenameAndDirectoryJsonNode.put("fileName", fileName);
+		filenameAndDirectoryJsonNode.put("fileName", "words.txt");
 		filenameAndDirectoryJsonNode.put("directory", directoryPath);
 		
 		MultiValueMap<String, String> reqParams = new LinkedMultiValueMap<>();
 		reqParams.add("n", "10");
 		
 		MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/content/freqwords")							
-				.contentType(MediaType.APPLICATION_JSON)
-				 .params(reqParams).content(filenameAndDirectoryJsonNode.toString())	
-			    .accept(MediaType.APPLICATION_JSON))
+				.contentType(MediaType.APPLICATION_JSON_VALUE)
+				.params(reqParams).content(filenameAndDirectoryJsonNode.toPrettyString())	
+			    .accept(MediaType.TEXT_PLAIN_VALUE))
 			    .andExpect(status().isOk())	
-			    .andExpect(jsonPath("$.size()").value(expectedFreq.size()))			   			    
+			    .andExpect(jsonPath("$.size()").value(expectedFreq.size()))	
+			    //.andExpect(jsonPath("$[0]", contains(" \"the frequency: 15\": \"[love]" ))
 			    .andReturn();
+			    
 		
 		 verify(fileContentService, times(1)).getFirstNFreqWords(fileName, directoryPath, 10);
+		 assertNotNull(result.getResponse().getContentAsString().contains("gardening"));
+	}
+	
+	@Test
+	void givenNoFileNameNoDirectoryPath_whenGetFirstNFreqWords_then400() throws Exception {
+						
+		when(fileContentService.getFirstNFreqWords("", "", 10)).thenThrow( new NoSuchFileException("the filename or directoryPath is null"));
+		
+		
+		
+		MultiValueMap<String, String> reqParams = new LinkedMultiValueMap<>();
+		reqParams.add("n", "10");
+		
+		MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/content/freqwords")							
+				.contentType(MediaType.APPLICATION_JSON_VALUE)
+				 .params(reqParams).content("{}")	
+			    .accept(MediaType.TEXT_PLAIN_VALUE))
+			    .andExpect(status().isBadRequest())				   			   			    
+			    .andReturn();
+		
+		
+		 assertNotNull(result.getResponse());
+		 assertTrue(result.getResponse().getContentAsString().contains("Bad request"));
+		
+	}
+	
+	@Test
+	void givenFileNameDirectoryPath_WhenGetFirstNFreqWordsNMissing_thenOK() throws Exception {
+		
+		when(fileContentService.getFirstNFreqWords(fileName, directoryPath, 0)).thenReturn(null);
+		
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode filenameAndDirectoryJsonNode = mapper.createObjectNode();
+		filenameAndDirectoryJsonNode.put("fileName", "words.txt");
+		filenameAndDirectoryJsonNode.put("directory", directoryPath);
+		
+		
+		MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/content/freqwords")							
+				.contentType(MediaType.APPLICATION_JSON_VALUE)
+				.content(filenameAndDirectoryJsonNode.toPrettyString())	
+			    .accept(MediaType.TEXT_PLAIN_VALUE))
+			    .andExpect(status().isBadRequest())				    
+			    .andReturn();
+		
+		 verify(fileContentService, times(0)).getFirstNFreqWords(fileName, directoryPath, 0);
 		 assertNotNull(result.getResponse());
 	}
 }

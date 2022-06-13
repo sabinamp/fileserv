@@ -132,7 +132,7 @@ public class FileContentServiceTest {
 		assertNotEquals(0, result.get(7).size(), "The result cannot be 0");
 		assertEquals(freqWords.get(9).size(), result.get(9).size());
 		} catch (NoSuchFileException e) {
-			// TODO Auto-generated catch block
+			
 			e.printStackTrace();
 		}
 	}
@@ -149,7 +149,7 @@ public class FileContentServiceTest {
 		assertEquals(longestWordsPerLine.toString(), result.toString());
 		assertTrue(longestWordsPerLine.get(4).size()== result.get(4).size());
 		} catch (NoSuchFileException e) {
-			// TODO Auto-generated catch block
+			
 			e.printStackTrace();
 		}
 	}

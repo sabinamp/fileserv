@@ -181,12 +181,11 @@ public class FreqWords {
 		  TreeMap<Integer, Set<WordFreqPair>> result = new TreeMap<>(Collections.reverseOrder());
 		try {
 			freqMap = getWordSetByFrequency(filename, directoryPath);
-			
-			
+						
 
 			int counter=0;
 			for(Entry<Integer, Set<String>> each: freqMap.entrySet() ) {
-				Set<WordFreqPair> wordFreqPairs= new HashSet();
+				Set<WordFreqPair> wordFreqPairs= new HashSet<>();
 				Set<String> currentWordSet = each.getValue();
 				Integer currentFrequency =  each.getKey();
 				
@@ -202,9 +201,7 @@ public class FreqWords {
 					break;
 				}
 							
-			}	
-			
-		
+			}					
 			 
 		} catch (IOException e) {			
 			e.printStackTrace();

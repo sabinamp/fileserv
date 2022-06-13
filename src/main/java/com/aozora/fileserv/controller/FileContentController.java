@@ -47,8 +47,8 @@ public class FileContentController {
 	@Autowired
 	private FileContentServI fileContentService;
 
-	@Autowired
-	private FileStorageServI fileStorageService;
+	//@Autowired
+	//private FileStorageServI fileStorageService;
 	
 	private static final Logger logger = LoggerFactory.getLogger(FileContentController.class);
 	
@@ -61,35 +61,9 @@ public class FileContentController {
 	}
 
 
-	/*
-	 * @PostMapping( value = "upload/freqwords", consumes =
-	 * MediaType.TEXT_PLAIN_VALUE, produces = {MediaType.APPLICATION_JSON_VALUE})
-	 * public ResponseEntity<String> getFirstNFreqWords(@RequestParam("file")
-	 * MultipartFile file, @RequestParam(required=true) int n) { String fileName =
-	 * fileStorageService.save(file);
-	 * 
-	 * String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-	 * .path("/downloads/") .path(fileName) .toUriString();
-	 * 
-	 * uploadResponse= new UploadFileResponse(fileName, fileDownloadUri,
-	 * file.getContentType(), file.getSize());
-	 * 
-	 * ResponseEntity<String> response = null; StringBuilder builder = new
-	 * StringBuilder(); String directoryPath = fileStorageService.getUploadDir();
-	 * words = fileContentService.getFirstNFreqWords(uploadResponse.getFileName(),
-	 * directoryPath, n); words.entrySet().forEach( s ->
-	 * builder.append(s.getValue()+" has the frequency: "+s.getKey() +" \n"));
-	 * 
-	 * 
-	 * String output = builder.toString(); if(output != null && !output.isEmpty()) {
-	 * response = new ResponseEntity<String>(output, HttpStatus.OK); }
-	 * 
-	 * return response; }
-	 */
-	
-	@PostMapping( value = "/freqwords", consumes={MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
-	public ResponseEntity<String> getFirstNFreqWords(@RequestParam(required=true) int n,
-			@RequestBody String jsonFileNameAndDir) {	
+		
+	@PostMapping(value = "/freqwords", consumes={MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.TEXT_PLAIN_VALUE})
+	public ResponseEntity<String> getFirstNFreqWords(@RequestParam(required=true) int n, @RequestBody String jsonFileNameAndDir) {	
 		ObjectMapper objectMapper = new ObjectMapper();		
 		JsonNode jsonFileNode = null;
 		List<String> frequenciesW = new ArrayList<>();
@@ -97,20 +71,23 @@ public class FileContentController {
 		try {
 			jsonFileNode = objectMapper.readTree(jsonFileNameAndDir);
 			if(jsonFileNode ==null) {
-				 return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
+				 return ResponseEntity.badRequest().body("Bad request. No filename and directory JSON");
 			}
 			JsonNode directoryNode =  jsonFileNode.get("directory");			
 			JsonNode fileNode = jsonFileNode.get("fileName");
-			 if(fileNode != null && directoryNode != null) {
+			 if(fileNode != null  && directoryNode != null & n!=0) {
 				    String fileName = fileNode.asText();			
-					String directoryPath = jsonFileNode.get("directory").asText();
+					String directoryPath = directoryNode.asText();
+					
 					words = fileContentService.getFirstNFreqWords(fileName,directoryPath, n);
-					if(!words.isEmpty()) {
+					
+					if(words != null && words.size() > 0) {
 						MultiValueMap<String,String> headers= new HttpHeaders();
 						headers.set("eTag", Long.valueOf(fileName.length()+directoryPath.length())+"111");
-						ObjectMapper objectMapper2 = new ObjectMapper();		
 						
+						ObjectMapper objectMapper2 = new ObjectMapper();						
 						ArrayNode frequenciesWArrayNode=objectMapper2.createArrayNode();
+						
 						words.entrySet().forEach(each-> {
 							ObjectNode eachNode = objectMapper2.createObjectNode() ;
 							Set<WordFreqPair> pairs= each.getValue();
@@ -122,6 +99,8 @@ public class FileContentController {
 						String frequenciesWJSON = objectMapper2.writerWithDefaultPrettyPrinter().writeValueAsString(frequenciesWArrayNode);
 						response = new ResponseEntity<String>(frequenciesWJSON, headers,HttpStatus.OK);
 										
+					}else if(words == null || words.size()==0){
+						response = ResponseEntity.noContent().build();
 					}
 			 }else {
 				 response = ResponseEntity.badRequest().body("Bad request. Incorrect JSON");

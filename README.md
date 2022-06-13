@@ -43,6 +43,8 @@
 	<li>
 	<p> POST http://localhost:8082/fileservice/content/freqwords?n=10 </p>
 	<p>
+	 Content-Type: application/json <br/>
+	 Accept: text/plain <br/>
 	- Request body json: 
 				<pre><code>{"fileName": "AppPropsExamples.txt", "directory": "C://workspace_sts4-14//fileserv//bin//main//static//uploads"}</code></pre>
 				<br/>
