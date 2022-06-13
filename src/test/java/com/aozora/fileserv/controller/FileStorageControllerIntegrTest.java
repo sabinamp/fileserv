@@ -109,23 +109,7 @@ public class FileStorageControllerIntegrTest {
 	 @Test
 	 void givenPatternWhenGetAllFilesThatMatchRegex_thenOK() throws Exception {
 		
-			ObjectMapper mapper2 = new ObjectMapper();			
-			ArrayNode filenames= mapper2.createArrayNode();
-			ObjectNode file1= mapper2.createObjectNode();
-			file1.putObject("words.txt");
-			ObjectNode file2= mapper2.createObjectNode();
-			file2.putObject("StoreAddressList.pdf");
-			ObjectNode file3= mapper2.createObjectNode();
-			file3.putObject("8-Reasons-AStartupOverACorporateJob.pdf");
-			ObjectNode file4= mapper2.createObjectNode();
-			file4.putObject("PathMatcher.txt");
-			ObjectNode file5= mapper2.createObjectNode();
-			file5.putObject("50-contacts.csv");
-			filenames.add(file1);
-			filenames.add(file2);
-			filenames.add(file3);
-			filenames.add(file4);
-			filenames.add(file5);
+			
 			
 		    final String baseUrl = LOCAL_HOST + randomServerPort + "/files/matchedfiles?syntax=regex";
 	        URI uri = new URI(baseUrl);
