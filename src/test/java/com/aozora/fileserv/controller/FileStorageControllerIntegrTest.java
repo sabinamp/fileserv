@@ -141,9 +141,75 @@ public class FileStorageControllerIntegrTest {
 			 			
 	 }
 	 
+	 @DisplayName("Integration test -Given Correct Pattern and Directory GetAllFilesThatMatchRegex -patternSyntax-unknown ")
+	 @Test
+	 void givenPatternDirectoryWhenGetAllFilesThatMatchRegex_WrongRegexSyntax_thenBadRequest() throws JsonProcessingException, Exception {
+		
+		  final String baseUrl = LOCAL_HOST + randomServerPort + "/files/matchedfiles?syntax=unknown";
+	      URI uri = new URI(baseUrl);
+	      
+	        ObjectMapper mapper = new ObjectMapper();
+			ObjectNode patternAndDirectoryJsonNode = mapper.createObjectNode();
+			patternAndDirectoryJsonNode.put("pattern", pattern);
+			patternAndDirectoryJsonNode.put("directory", dataDirectoryPath);
+			
+	        mockServer.expect(ExpectedCount.once(), requestTo(uri))
+			  .andExpect(method(HttpMethod.POST))			  
+			  .andExpect(queryParam("syntax", "unknown"))	
+			  .andExpect(content().json(mapper.writeValueAsString(patternAndDirectoryJsonNode)))
+			  .andRespond(withStatus(HttpStatus.BAD_REQUEST).contentType(MediaType.APPLICATION_JSON)    	 
+	          );
+			
+	          HttpHeaders headers = new HttpHeaders();
+			  headers.setContentType(MediaType.APPLICATION_JSON);
+			  HttpEntity<String> request = new HttpEntity<String>(patternAndDirectoryJsonNode.toPrettyString(), headers);
+			
+			
+			  Assertions.assertThrows(HttpClientErrorException.class,()->{
+				  ResponseEntity<String[]> response  = template.postForEntity(uri, request, String[].class);
+				});
+								
+			
+			  mockServer.verify();			
+		
+	 }
+	 
+	 @DisplayName("Integration test - givenPatternNullDirectoryWhenGetAllFilesThatMatchRegex_thenBadRequest ")
+	 @Test
+	 void givenPatternNullDirectoryWhenGetAllFilesThatMatchRegex_thenBadRequest() throws JsonProcessingException, Exception {
+		
+		  final String baseUrl = LOCAL_HOST + randomServerPort + "/files/matchedfiles?syntax=regex";
+	      URI uri = new URI(baseUrl);
+	      
+	        ObjectMapper mapper = new ObjectMapper();
+			ObjectNode patternAndDirectoryJsonNode = mapper.createObjectNode();
+			patternAndDirectoryJsonNode.put("pattern", pattern);
+			patternAndDirectoryJsonNode.put("directory", "");
+			
+	        mockServer.expect(ExpectedCount.once(), requestTo(uri))
+			  .andExpect(method(HttpMethod.POST))			  
+			  .andExpect(queryParam("syntax", "regex"))	
+			  .andExpect(content().json(mapper.writeValueAsString(patternAndDirectoryJsonNode)))
+			  .andRespond(withStatus(HttpStatus.BAD_REQUEST).contentType(MediaType.APPLICATION_JSON)    	 
+	          );
+			
+	          HttpHeaders headers = new HttpHeaders();
+			  headers.setContentType(MediaType.APPLICATION_JSON);
+			  HttpEntity<String> request = new HttpEntity<String>(patternAndDirectoryJsonNode.toPrettyString(), headers);
+			
+			
+			  Assertions.assertThrows(HttpClientErrorException.class,()->{
+				  ResponseEntity<String[]> response  = template.postForEntity(uri, request, String[].class);
+				});
+								
+			
+			  mockServer.verify();			
+		
+	 }
+	 
 	 @DisplayName("Integration test - given null Pattern and null directory GetAllFilesThatMatchRegex - Request body: {}")
 	 @Test
-	 void givenNullPatternNullDirectoryWhenGetAllFilesThatMatchRegex_thenBadRequest() throws JsonProcessingException, Exception {
+	 void  givenNullPatternNullDirectoryWhenGetAllFilesThatMatchRegexGlobSyntax_thenBadRequest() throws JsonProcessingException, Exception {
 		
 		  final String baseUrl = LOCAL_HOST + randomServerPort + "/files/matchedfiles?syntax=glob";
 	        URI uri = new URI(baseUrl);
@@ -157,17 +223,11 @@ public class FileStorageControllerIntegrTest {
 	          HttpHeaders headers = new HttpHeaders();
 			  headers.setContentType(MediaType.APPLICATION_JSON);
 			  HttpEntity<String> request = new HttpEntity<String>("{}", headers);
-			
-				/*
-				 * try { response = template.postForEntity(uri, request, String[].class); }
-				 * catch(HttpClientErrorException ex) {
-				 * System.out.println("HttpClientErrorException thrown"); }
-				 */
+		
 			  Assertions.assertThrows(HttpClientErrorException.class,()->{
 				  ResponseEntity<String[]> response  = template.postForEntity(uri, request, String[].class);
 				});
-							 
-			 		
+			
 			
 			  mockServer.verify();
 			

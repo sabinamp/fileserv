@@ -50,6 +50,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.aozora.fileserv.config.FileServiceProperties;
 import com.aozora.fileserv.service.FileStorageService;
@@ -129,7 +130,7 @@ public class FileStorageControllerTest {
 				 
 		 when(fileStorageService.getAllFileNamesThatMatchRegex(pattern, patternSyntax, dataDirectoryPath))
 			 	.thenReturn(expectedFilenames);
-		//String jsonPatternAndDirectory= "{\"pattern\": \"^[a-zA-Z0-9._ -]+\\.(doc|pdf|csv|txt)$\",\"directory\": \"C:/workspace_sts4-14/fileserv/bin/main/static/data\"}";
+		
 		MultiValueMap<String, String> reqParams = new LinkedMultiValueMap<>();
 		reqParams.add("syntax", "regex");
 		
@@ -148,10 +149,10 @@ public class FileStorageControllerTest {
 			 		
 		 verify(fileStorageService, times(1)).getAllFileNamesThatMatchRegex(pattern, patternSyntax, dataDirectoryPath);
 		 assertNotNull(result.getResponse().getContentAsString());
-		 assertTrue(result.getResponse().getErrorMessage()==null);
-		
+		 assertTrue(result.getResponse().getErrorMessage()==null);		
 			 
 	 }
+	 
 	 
 	 @Test
 	 void givenNoPatternWhenGetAllFilesThatMatchRegex_then400() throws Exception {
@@ -170,6 +171,7 @@ public class FileStorageControllerTest {
 				.andExpect(status().isBadRequest());			 		
 		 
 	 }
+	 
 	 @Test
 	 void givenPatternWhenGetAllFilesThatMatchRegex_thenReturnNoContent() throws Exception {
 		 MultiValueMap<String, String> reqParams = new LinkedMultiValueMap<>();
@@ -186,20 +188,38 @@ public class FileStorageControllerTest {
 			 		
 		 
 	 }
-		/*
-		 * @Test public void testSaveUploadedFile() throws Exception { MockMultipartFile
-		 * multipartFile = new MockMultipartFile("file", "test.txt", "text/plain",
-		 * "Spring Framework".getBytes());
-		 * this.mockMvc.perform(multipart("/").file(multipartFile))
-		 * .andExpect(status().isFound()) .andExpect(header().string("Location", "/"));
-		 * 
-		 * when(this.fileStorageService.save(multipartFile)).thenReturn("test.txt"); }
-		 */
+		
 	 
-		/*
-		 * @Test void givenGlobPatternAndGlobSyntax_ThenCorrect() {
-		 * 
-		 * }
-		 */
+	 
+		
+	  @Test
+	  public void givenGlobPatternAndGlobSyntax_ThenCorrect() throws Exception {
+			 
+		  	when(fileStorageService.getAllFileNamesThatMatchRegex("*.{doc,csv,pdf,txt}", "glob", dataDirectoryPath))
+		 	.thenReturn(expectedFilenames);
+		  
+		    MultiValueMap<String, String> reqParams = new LinkedMultiValueMap<>();
+			reqParams.add("syntax", "glob");
+			
+			ObjectMapper mapper = new ObjectMapper();
+			ObjectNode patternAndDirectoryJsonNode2 = mapper.createObjectNode();
+			patternAndDirectoryJsonNode2.put("pattern", "*.{doc,csv,pdf,txt}");
+			patternAndDirectoryJsonNode2.put("directory", dataDirectoryPath);
+			
+			MvcResult result = mockMvc.perform(MockMvcRequestBuilders.post("/files/matchedfiles")							
+					.contentType(MediaType.APPLICATION_JSON)
+						.params(reqParams).content(patternAndDirectoryJsonNode2.toString())	
+					    .accept(MediaType.APPLICATION_JSON))
+					    .andExpect(status().isOk())	
+					    .andExpect(jsonPath("$.size()").value(expectedFilenames.size()))
+					    .andExpect(jsonPath("$[*]", hasItem("words.txt")))				    
+					    .andReturn();
+				 		
+			 verify(fileStorageService, times(1)).getAllFileNamesThatMatchRegex( "*.{doc,csv,pdf,txt}", "glob", dataDirectoryPath);
+			 assertNotNull(result.getResponse().getContentAsString());
+			 assertTrue(result.getResponse().getErrorMessage()==null);
+		  
+	  }
+		 
 
 }

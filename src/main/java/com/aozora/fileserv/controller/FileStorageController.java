@@ -107,15 +107,5 @@ public class FileStorageController {
 	        .body(fileResource);
 	}
 	
-	/*
-	 * @PostMapping("/upload") public UploadFileResponse
-	 * uploadFile(@RequestParam("file") MultipartFile file) { String fileName =
-	 * fileStorageService.save(file);
-	 * 
-	 * String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-	 * .path("/uploads/") .path(fileName) .toUriString();
-	 * 
-	 * return new UploadFileResponse(fileName, fileDownloadUri,
-	 * file.getContentType(), file.getSize()); }
-	 */
+
 }
